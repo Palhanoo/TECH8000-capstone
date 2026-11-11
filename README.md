@@ -13,3 +13,7 @@ Work Experience: worked as an Infrastructure Engineer and System Administrator f
 hobbies: playing games, basketball and watching anime
 future: cloud engineer/Data center engineer
 
+Augmented Reality - for food menu see food in 3D
+Mobile App - safety, avoid dangerous areas or report activities, 
+security breach system - check if you're email is compromised
+mobile game - cybersecurity lessons, spotting phishing
