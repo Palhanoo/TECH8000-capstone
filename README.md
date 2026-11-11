@@ -27,3 +27,12 @@ I worked as a Software Developer for over 3 years and UI/UX Design for a year. A
 Technical Skills: Ruby on Rails, Django, Laravel, Codeigniter, NextJS & Tailwind
 
 Hobbies and Interest: Video Games, Art, reading, keeping myself updated in tech and maybe doomscrolling
+
+Felipe Munoz. 
+Chile
+Skills: programing - stack python - next js - postgres.
+
+experience: telecommunications company in Chile it support engineer- Chilean Air force: Cybersecurity developer
+- banking development enterprises - Full Stack Engineer
+-  Software engineer in small developement company in Melbourne
+- medical startup (Australia) - Mid Full stack engineer.
