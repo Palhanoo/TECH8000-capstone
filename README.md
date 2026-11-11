@@ -20,3 +20,10 @@ Work Experience: Marketing (7 years)
 Hobbies: Coffee brewing and stock market trading
 Future Work: Data analyst or business analyst
 
+Elheimay Aubrey Yu | Philippines
+
+I worked as a Software Developer for over 3 years and UI/UX Design for a year. As an early adopter of AI technologies, I specialize in transforming complex technical challenges into intelligent, user-centric web solutions. Currently blending technical problem-solving as a Software Developer Intern with hands-on customer experience in a dynamic Front of House/Barista role.
+
+Technical Skills: Ruby on Rails, Django, Laravel, Codeigniter, NextJS & Tailwind
+
+Hobbies and Interest: Video Games, Art, reading, keeping myself updated in tech and maybe doomscrolling
