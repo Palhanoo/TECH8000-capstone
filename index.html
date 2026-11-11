@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TECH8000 Capstone team</title>
+<meta name="description" content="The people behind our TECH8000 capstone project: skills, experience and goals." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --cobalt: #2340c8;
+    --cobalt-deep: #1a2f9c;
+    --sheet: #f4f6fb;
+    --ink: #101531;
+    --marigold: #ffc531;
+    --mist: #b9c6ff;
+    --display: "Bricolage Grotesque", "Arial Narrow", sans-serif;
+    --body: "Atkinson Hyperlegible", Verdana, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+
+  body {
+    font-family: var(--body);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    background: var(--cobalt);
+    color: #fff;
+    min-height: 100vh;
+  }
+
+  .page {
+    max-width: 74rem;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1.25rem, 4vw, 3rem) 4rem;
+  }
+
+  .intro { max-width: 34rem; margin-bottom: clamp(2rem, 5vw, 4rem); }
+  .intro h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.375rem;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+  .intro p { color: var(--mist); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
+    align-items: start;
+  }
+
+  /* ---- the names: the one loud thing on the page ---- */
+  .roster { display: flex; flex-direction: column; gap: clamp(1rem, 2.5vw, 2rem); }
+
+  .roster button {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    color: var(--mist);
+    border-radius: 4px;
+  }
+  .roster .first-name {
+    display: block;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(3.25rem, 9.5vw, 7.5rem);
+    line-height: 0.88;
+    letter-spacing: -0.035em;
+    transition: color 0.15s;
+  }
+  .roster .role {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    color: var(--mist);
+  }
+  .roster button:hover .first-name { color: #fff; }
+  .roster button[aria-selected="true"] .first-name { color: var(--marigold); }
+  .roster button[aria-selected="true"] .role { color: #fff; }
+  .roster button:focus-visible { outline: 3px solid var(--marigold); outline-offset: 6px; }
+
+  /* ---- the profile sheet ---- */
+  .sheet {
+    background: var(--sheet);
+    color: var(--ink);
+    border-radius: 6px;
+    padding: clamp(1.5rem, 3.2vw, 2.75rem);
+    box-shadow: 0.75rem 0.75rem 0 var(--cobalt-deep);
+    position: sticky; /* stays in view while the list of names scrolls */
+    top: 2rem;
+  }
+  .sheet:focus-visible { outline: 3px solid var(--marigold); outline-offset: 4px; }
+  .sheet.swap { animation: swap 0.22s ease-out; }
+  @keyframes swap {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .sheet h2 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(1.75rem, 3vw, 2.375rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .sheet .origin { margin-top: 0.375rem; color: var(--cobalt); font-weight: 700; }
+  .sheet .about { margin-top: 1.25rem; max-width: 36rem; }
+
+  .facts { margin-top: 1.75rem; }
+  .facts > div {
+    display: grid;
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0.875rem 0;
+    border-top: 1px solid rgba(16, 21, 49, 0.14);
+  }
+  .facts dt { font-weight: 700; color: var(--cobalt); }
+  .facts ul {
+    list-style: none;
+    padding: 0;
+    columns: 2;
+    column-gap: 1.5rem;
+  }
+  .facts ul.single { columns: 1; }
+  .facts ul.single li + li { margin-top: 0.25rem; }
+  .facts li {
+    break-inside: avoid;
+    padding-left: 1rem;
+    position: relative;
+  }
+  .facts li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.6em;
+    width: 0.4rem;
+    height: 0.4rem;
+    background: var(--marigold);
+  }
+
+  noscript p { background: var(--sheet); color: var(--ink); padding: 1rem; border-radius: 6px; }
+
+  @media (max-width: 50rem) {
+    .layout { grid-template-columns: 1fr; }
+    .roster { flex-direction: row; flex-wrap: wrap; gap: 0.75rem 1.5rem; }
+    .roster button { width: auto; }
+    .roster .first-name { font-size: clamp(2.25rem, 11vw, 3.5rem); }
+    .roster .role { display: none; }
+    .sheet { box-shadow: 0.5rem 0.5rem 0 var(--cobalt-deep); position: static; }
+  }
+  @media (max-width: 30rem) {
+    .facts > div { grid-template-columns: 1fr; gap: 0.25rem; }
+    .facts ul { columns: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sheet.swap { animation: none; }
+    .roster .first-name { transition: none; }
+  }
+</style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <h1>TECH8000 Capstone team</h1>
+      <p>Meet the people behind our capstone project. Select a name to read their profile.</p>
+    </header>
+
+    <div class="layout">
+      <div class="roster" id="roster" role="tablist" aria-label="Team members" aria-orientation="vertical"></div>
+      <section class="sheet" id="sheet" role="tabpanel" tabindex="0"></section>
+    </div>
+
+    <noscript><p>This page needs JavaScript to show the profiles. The same details are in the README of the repository.</p></noscript>
+  </main>
+
+<script>
+/*
+ * TEAM DATA
+ * To add or update a teammate, edit this list only. One block per person.
+ *   id         short lowercase word, used in the page link (index.html#josh)
+ *   firstName  the big name in the list
+ *   fullName   shown at the top of the profile
+ *   goesBy     optional nickname
+ *   from       home country or region
+ *   role       one short line under the big name
+ *   about      two or three sentences
+ *   skills     list of skills
+ *   experience, outsideWork, nextGoal   one short line each
+ *                                      (experience can also be a list of jobs)
+ */
+const team = [
+  {
+    id: "bruno",
+    firstName: "Bruno",
+    fullName: "Bruno Palhano",
+    from: "Brazil",
+    role: "Full-stack and AI engineer",
+    about:
+      "I'm a software engineer and I work as a full-stack developer, mainly with JavaScript and TypeScript. " +
+      "I've also built Android and iOS apps and designed database structures. " +
+      "Right now I work in AI engineering, building an autonomous system for marketing and customer handling.",
+    skills: ["JavaScript and TypeScript", "Full-stack development", "Android and iOS apps", "Database design", "AI engineering"],
+    experience: "Worked in the restaurant and hospitality industry",
+    outsideWork: "Playing games",
+    nextGoal: "Quantum computing",
+  },
+  {
+    id: "josh",
+    firstName: "Josh",
+    fullName: "Josh Lim",
+    from: "Philippines",
+    role: "Infrastructure engineer",
+    about:
+      "I'm an infrastructure engineer and I have worked as a system administrator. " +
+      "I look after the hardware, networks and cloud systems that everything else runs on, " +
+      "and I keep them monitored, secure and documented.",
+    skills: [
+      "Infrastructure maintenance", "Hardware", "Virtualisation", "Networking", "Desktop support",
+      "Cloud", "Security", "Pen testing", "System monitoring", "Documentation",
+    ],
+    experience: "9 years as an infrastructure engineer and system administrator",
+    outsideWork: "Playing games, basketball and watching anime",
+    nextGoal: "Cloud engineer or data centre engineer",
+  },
+  {
+    id: "chuck",
+    firstName: "Chuck",
+    fullName: "Chin Yee Chuk",
+    goesBy: "Chuck",
+    from: "Hong Kong",
+    role: "Marketing and data",
+    about:
+      "I have 7 years of experience in marketing. " +
+      "My IT skills are machine learning algorithms, SQL, Python, R and marketing automation, " +
+      "and I want to move into a data analyst or business analyst role.",
+    skills: ["Machine learning algorithms", "SQL", "Python", "R", "Marketing automation"],
+    experience: "7 years in marketing",
+    outsideWork: "Coffee brewing and stock market trading",
+    nextGoal: "Data analyst or business analyst",
+  },
+  {
+    id: "aubrey",
+    firstName: "Aubrey",
+    fullName: "Elheimay Aubrey Yu",
+    goesBy: "Aubrey",
+    from: "Philippines",
+    role: "Software developer",
+    about:
+      "I worked as a software developer for over 3 years and in UI/UX design for a year. " +
+      "I was an early adopter of AI technologies, and I like turning complex technical problems into web solutions that are easy for people to use. " +
+      "Right now I'm a software developer intern, and I also work front of house as a barista.",
+    skills: ["Ruby on Rails", "Django", "Laravel", "CodeIgniter", "Next.js", "Tailwind"],
+    experience: "Over 3 years as a software developer and 1 year in UI/UX design",
+    outsideWork: "Video games, art, reading, keeping up with tech and maybe doomscrolling",
+  },
+  {
+    id: "felipe",
+    firstName: "Felipe",
+    fullName: "Felipe Munoz",
+    from: "Chile",
+    role: "Full-stack engineer",
+    about:
+      "I'm a programmer and my stack is Python, Next.js and Postgres. " +
+      "I've worked in IT support, cybersecurity development and full-stack engineering, first in Chile and now in Australia.",
+    skills: ["Python", "Next.js", "Postgres"],
+    experience: [
+      "IT support engineer at a telecommunications company in Chile",
+      "Cybersecurity developer for the Chilean Air Force",
+      "Full-stack engineer for banking development companies",
+      "Software engineer at a small development company in Melbourne",
+      "Mid-level full-stack engineer at a medical startup in Australia",
+    ],
+  },
+];
+
+const roster = document.getElementById("roster");
+const sheet = document.getElementById("sheet");
+
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function factRow(label, content, singleColumn) {
+  const row = el("div");
+  row.appendChild(el("dt", "", label));
+  const dd = el("dd");
+  if (Array.isArray(content)) {
+    const list = el("ul", singleColumn ? "single" : "");
+    content.forEach((item) => list.appendChild(el("li", "", item)));
+    dd.appendChild(list);
+  } else {
+    dd.textContent = content;
+  }
+  row.appendChild(dd);
+  return row;
+}
+
+function showProfile(member, animate) {
+  sheet.replaceChildren();
+  sheet.setAttribute("aria-labelledby", "tab-" + member.id);
+
+  sheet.appendChild(el("h2", "", member.fullName));
+  const origin = member.goesBy ? `Goes by ${member.goesBy}, from ${member.from}` : `From ${member.from}`;
+  sheet.appendChild(el("p", "origin", origin));
+  if (member.about) sheet.appendChild(el("p", "about", member.about));
+
+  const facts = el("dl", "facts");
+  if (member.skills?.length) facts.appendChild(factRow("Skills", member.skills));
+  if (member.experience) facts.appendChild(factRow("Experience", member.experience, true));
+  if (member.outsideWork) facts.appendChild(factRow("Outside work", member.outsideWork));
+  if (member.nextGoal) facts.appendChild(factRow("Next goal", member.nextGoal));
+  sheet.appendChild(facts);
+
+  if (animate) {
+    sheet.classList.remove("swap");
+    void sheet.offsetWidth; // restart the animation
+    sheet.classList.add("swap");
+  }
+}
+
+function select(id, { animate = true, focus = false } = {}) {
+  const member = team.find((m) => m.id === id) || team[0];
+  roster.querySelectorAll("button").forEach((button) => {
+    const active = button.dataset.id === member.id;
+    button.setAttribute("aria-selected", String(active));
+    button.tabIndex = active ? 0 : -1;
+    if (active && focus) button.focus();
+  });
+  showProfile(member, animate);
+  history.replaceState(null, "", "#" + member.id);
+}
+
+team.forEach((member) => {
+  const button = el("button");
+  button.type = "button";
+  button.id = "tab-" + member.id;
+  button.dataset.id = member.id;
+  button.setAttribute("role", "tab");
+  button.setAttribute("aria-controls", "sheet");
+  button.appendChild(el("span", "first-name", member.firstName));
+  button.appendChild(el("span", "role", member.role));
+  button.addEventListener("click", () => select(member.id));
+  roster.appendChild(button);
+});
+
+// Arrow keys move between names, as in any tab list.
+roster.addEventListener("keydown", (event) => {
+  const keys = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
+  if (!(event.key in keys)) return;
+  event.preventDefault();
+  const current = team.findIndex((m) => m.id === document.activeElement.dataset.id);
+  const next = (current + keys[event.key] + team.length) % team.length;
+  select(team[next].id, { focus: true });
+});
+
+select(location.hash.slice(1), { animate: false });
+</script>
+</body>
+</html>
