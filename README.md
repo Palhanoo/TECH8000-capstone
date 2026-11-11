@@ -15,7 +15,7 @@ future: cloud engineer/Data center engineer
 
 Chin Yee Chuk (Chuck)
 Hong Kong
-IT Skills: Machine learning algorithms, SQL, Python, and marketing automation
+IT Skills: Machine learning algorithms, SQL, Python, R, and marketing automation
 Work Experience: Marketing (7 years)
 Hobbies: Coffee brewing and stock market trading
 Future Work: Data analyst or business analyst
@@ -26,7 +26,8 @@ I worked as a Software Developer for over 3 years and UI/UX Design for a year. A
 
 Technical Skills: Ruby on Rails, Django, Laravel, Codeigniter, NextJS & Tailwind
 
-Hobbies and Interest: Video Games, Art, reading, keeping myself updated in tech and maybe doomscrollingAugmented Reality - for food menu see food in 3D
+Hobbies and Interest: Video Games, Art, reading, keeping myself updated in tech and maybe doomscrolling
+Augmented Reality - for food menu see food in 3D
 
 
 
