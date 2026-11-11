@@ -36,3 +36,17 @@ experience: telecommunications company in Chile it support engineer- Chilean Air
 - banking development enterprises - Full Stack Engineer
 -  Software engineer in small developement company in Melbourne
 - medical startup (Australia) - Mid Full stack engineer.
+
+Augmented Reality - for food menu see food in 3D
+
+
+
+
+
+
+
+
+Augmented Reality - for food menu see food in 3D
+Mobile App - safety, avoid dangerous areas or report activities, 
+security breach system - check if you're email is compromised
+mobile game - cybersecurity lessons, spotting phishing
