@@ -13,3 +13,10 @@ Work Experience: worked as an Infrastructure Engineer and System Administrator f
 hobbies: playing games, basketball and watching anime
 future: cloud engineer/Data center engineer
 
+Chin Yee Chuk (Chuck)
+Hong Kong
+IT Skills: Machine learning algorithms, SQL, Python, and marketing automation
+Work Experience: Marketing (7 years)
+Hobbies: Coffee brewing and stock market trading
+Future Work: Data analyst or business analyst
+
