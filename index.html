@@ -147,6 +147,36 @@
     background: var(--marigold);
   }
 
+  /* ---- project ideas ---- */
+  .ideas { margin-top: clamp(4rem, 9vw, 7.5rem); }
+  .ideas-title {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    line-height: 1;
+    letter-spacing: -0.025em;
+  }
+  .ideas-intro { margin-top: 0.5rem; color: var(--mist); max-width: 34rem; }
+  .ideas-list {
+    list-style: none;
+    padding: 0;
+    margin-top: clamp(1.5rem, 3vw, 2.5rem);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 clamp(1.5rem, 4vw, 4rem);
+  }
+  .ideas-list li {
+    padding: 1.25rem 0 1.5rem;
+    border-top: 2px solid rgba(255, 255, 255, 0.28);
+  }
+  .ideas-list h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 1.15;
+  }
+  .ideas-list p { margin-top: 0.375rem; color: var(--mist); max-width: 30rem; }
+
   noscript p { background: var(--sheet); color: var(--ink); padding: 1rem; border-radius: 6px; }
 
   @media (max-width: 50rem) {
@@ -156,6 +186,7 @@
     .roster .first-name { font-size: clamp(2.25rem, 11vw, 3.5rem); }
     .roster .role { display: none; }
     .sheet { box-shadow: 0.5rem 0.5rem 0 var(--cobalt-deep); position: static; }
+    .ideas-list { grid-template-columns: 1fr; }
   }
   @media (max-width: 30rem) {
     .facts > div { grid-template-columns: 1fr; gap: 0.25rem; }
@@ -178,6 +209,12 @@
       <div class="roster" id="roster" role="tablist" aria-label="Team members" aria-orientation="vertical"></div>
       <section class="sheet" id="sheet" role="tabpanel" tabindex="0"></section>
     </div>
+
+    <section class="ideas" aria-labelledby="ideas-title">
+      <h2 class="ideas-title" id="ideas-title">Project ideas</h2>
+      <p class="ideas-intro">The ideas we're considering for the capstone.</p>
+      <ul class="ideas-list" id="ideas"></ul>
+    </section>
 
     <noscript><p>This page needs JavaScript to show the profiles. The same details are in the README of the repository.</p></noscript>
   </main>
@@ -281,6 +318,40 @@ const team = [
     ],
   },
 ];
+
+/*
+ * PROJECT IDEAS
+ * One block per idea: a short title and one sentence about it.
+ */
+const ideas = [
+  {
+    title: "AR food menu",
+    description: "Use augmented reality to see the food on a menu in 3D before you order.",
+  },
+  {
+    title: "Safety app",
+    description: "A mobile app that helps you avoid dangerous areas and report activity.",
+  },
+  {
+    title: "Breach checker",
+    description: "A security breach system that checks if your email has been compromised.",
+  },
+  {
+    title: "Cybersecurity game",
+    description: "A mobile game with cybersecurity lessons, such as spotting phishing.",
+  },
+];
+
+const ideasList = document.getElementById("ideas");
+ideas.forEach((idea) => {
+  const item = document.createElement("li");
+  const title = document.createElement("h3");
+  title.textContent = idea.title;
+  const description = document.createElement("p");
+  description.textContent = idea.description;
+  item.append(title, description);
+  ideasList.appendChild(item);
+});
 
 const roster = document.getElementById("roster");
 const sheet = document.getElementById("sheet");
