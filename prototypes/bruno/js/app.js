@@ -75,14 +75,18 @@ function addTiles(map) {
 
 /* ---------- formatting one field value ---------- */
 const SHOW_UNIT = new Set(["dBm", "dB", "m", "m/s", "Mbps", "ms", "%", "degrees"]);
-function formatValue(f, m, mine) {
+// canSeeAll: the contributor themselves, or Monash staff.
+function formatValue(f, m, canSeeAll) {
   const v = m[f.key];
-  if (f.privacy === "restricted" && !mine) return { text: MISSING.withheld, na: true };
+  if (f.privacy === "restricted" && !canSeeAll) return { text: MISSING.withheld, na: true };
   if (v == null || v === "") return { text: MISSING[m.na?.[f.key]] || "Not recorded", na: true };
   if (typeof v === "boolean") return { text: v ? "Yes" : "No" };
   if (f.key === "takenAt") return { text: new Date(v).toLocaleString(undefined, { timeZone: m.tz, dateStyle: "medium", timeStyle: "short" }) + " local" };
   if (f.key === "environment") return { text: v[0].toUpperCase() + v.slice(1) };
-  if (f.key === "contributor") return { text: api.contributor(v).display };
+  if (f.key === "contributor") {
+    if (api.isAdmin()) { const who = api.identity(v); return { text: `${who.name} (${who.email || "deleted"})` }; }
+    return { text: api.contributor(v).display };
+  }
   if (f.key === "neighbours") return { text: v.split("|").map((x) => x.replace(":", " @ ") + " dBm").join(", ") };
   return { text: String(v) + (f.unit && SHOW_UNIT.has(f.unit) ? " " + f.unit : "") };
 }
@@ -111,7 +115,7 @@ function coverageLine(m) {
 const PUBLIC_ROUTES = ["login", "register", "verify", "data"];
 const AUTH_ROUTES = ["login", "register", "verify"];
 const TITLES = { login: "Sign in", register: "Create account", verify: "Verify your email", feed: "Signal Club", map: "Coverage map",
-  record: "Record", insights: "Insights", me: "Your account", post: "Post", data: "Data dictionary" };
+  record: "Record", insights: "Insights", me: "Your account", post: "Post", data: "Data dictionary", admin: "Staff console" };
 let teardown = [];
 // Each navigation bumps this. A slow response for a page we've already left is dropped.
 let routeSeq = 0;
@@ -132,6 +136,9 @@ async function router() {
   $("#title").textContent = TITLES[name];
   $("#back").hidden = !["post", "data"].includes(name);
   $("#tabs").hidden = !user;
+  $("#tab-admin").hidden = !api.isAdmin();
+  $("#tabs").classList.toggle("six", api.isAdmin());
+  $("#kicker").textContent = api.isAdmin() ? "Monash GDDS · Staff" : "Monash GDDS · Global";
   $("#me-badge").hidden = !user;
   if (user) {
     const me = api.publicUser(user);
@@ -148,6 +155,7 @@ async function router() {
   } catch (e) {
     if (isStale(seq)) return;
     if (e.code === "unauthenticated") return go("login");
+    if (e.code === "forbidden") return go("feed");
     view.innerHTML = `<div class="empty">${esc(e.message)}<br><br><a href="#/feed">Back to the feed</a></div>`;
   }
 }
@@ -169,13 +177,14 @@ function viewLogin() {
       <button class="btn">Sign in</button>
     </form>
     <p class="small" style="margin-top:1rem;text-align:center">New here? <a href="#/register">Create an account</a></p>
-    <div class="demo-box">Prototype demo account<br><b>demo@student.monash.edu</b> / <b>monash123</b>
-      <button class="btn ghost" id="fill" style="margin-top:.6rem;padding:.5rem">Fill it in</button></div>
-    <p class="note">Prototype only: "Continue with Monash" signs in as the demo account, and all data stays in this browser. <a href="#/data">See what we collect</a>.</p>
+    <div class="demo-box">Prototype accounts<br>Student: <b>demo@student.monash.edu</b> / <b>monash123</b>
+      <button class="btn ghost" id="fill" style="margin-top:.6rem;padding:.5rem">Fill in the student account</button>
+      <p class="note" style="margin-top:.6rem">"Continue with Monash" signs in as Monash staff (<b>admin@monash.edu</b> / <b>admin123</b>), who can see every field, real identities and the moderation tools.</p></div>
+    <p class="note">Prototype only: all data stays in this browser. <a href="#/data">See what we collect</a>.</p>
   </div>`;
   const f = $("#f");
   $("#fill").onclick = () => { f.email.value = "demo@student.monash.edu"; f.password.value = "monash123"; };
-  $("#sso").onclick = (e) => busy(e.currentTarget, "Redirecting to Monash...", async () => { await api.monashSso(); go("feed"); });
+  $("#sso").onclick = (e) => busy(e.currentTarget, "Redirecting to Monash...", async () => { await api.monashSso(); go("admin"); });
   f.onsubmit = (e) => {
     e.preventDefault();
     busy(f.querySelector("button"), "Signing in...", async () => {
@@ -289,10 +298,11 @@ function postCard(p) {
     <div class="actions">
       <button data-act="like" class="${p.liked ? "liked" : ""}" aria-pressed="${p.liked}" aria-label="Like">${ICON.heart}<span>${p.likeCount}</span></button>
       <a href="#/post/${p.id}" aria-label="Comments">${ICON.chat}${p.comments.length}</a>
+      ${p.reportCount && api.isAdmin() ? `<span class="pill poor">${p.reportCount} report${p.reportCount > 1 ? "s" : ""}</span>` : ""}
       <button data-act="menu" class="more" aria-label="More options">${ICON.dots}</button>
     </div>
     <div class="menu" hidden>
-      ${p.mine ? `<button data-act="delete" class="danger">Delete post</button>`
+      ${p.mine || api.isAdmin() ? `<button data-act="delete" class="danger">${p.mine ? "Delete post" : "Remove post (staff)"}</button>`
         : `<button data-act="report" data-reason="inaccurate">Report: looks like bad data</button>
            <button data-act="report" data-reason="inappropriate">Report: inappropriate</button>`}
     </div>
@@ -371,6 +381,7 @@ async function viewPost(id) {
       <div class="mini-map" id="mm"></div>
       ${p.kind === "walk" ? `<div class="stepper"><span>Reading</span><input type="range" id="step" min="0" max="${p.readings.length - 1}" value="0" aria-label="Choose a reading in this walk" /><b id="stepn">1 / ${p.readings.length}</b></div>` : ""}
       <div id="coverage"></div>
+      <div id="admin-box"></div>
       <div id="fields"></div>
       <div class="card"><h3>Comments (${p.comments.length})</h3>
         <div class="comments">${p.comments.map((c) => `<div class="comment">${avatar(c.author, "sm")}<div><b>${esc(c.author.display)}</b>${esc(c.text)}<div class="small">${ago(c.at)}</div></div></div>`).join("") || `<p class="small">No comments yet.</p>`}</div>
@@ -397,10 +408,21 @@ async function viewPost(id) {
   const show = (i) => {
     const r = p.readings[i];
     $("#coverage").innerHTML = coverageLine(r);
-    $("#fields").innerHTML = fieldTables(r, p.mine);
+    $("#fields").innerHTML = fieldTables(r, p.mine || api.isAdmin());
     markers.forEach((mk, k) => mk.setRadius(k === i ? 10 : 6));
     if ($("#stepn")) $("#stepn").textContent = `${i + 1} / ${p.readings.length}`;
   };
+  if (p.real) {
+    $("#admin-box").innerHTML = `<div class="card admin-card"><h3>Staff view</h3><table class="fields">
+      <tr><th>Real name</th><td>${esc(p.real.name)}</td></tr>
+      <tr><th>Email</th><td>${esc(p.real.email)}</td></tr>
+      <tr><th>User ID</th><td>${esc(p.real.id)}</td></tr>
+      <tr><th>Account</th><td>${esc(p.real.status)}</td></tr>
+      <tr><th>Reports</th><td>${p.reportCount ? `${p.reportCount} (${esc(p.reportReasons.join(", "))})` : "None"}</td></tr></table>
+      <details style="margin-top:.7rem"><summary class="small" style="cursor:pointer">Raw record (JSON)</summary>
+        <pre class="raw">${esc(JSON.stringify(p.readings.length > 1 ? p.readings : p.readings[0], null, 2))}</pre></details>
+      <p class="note">Restricted fields (cell ID, TAC) and real identities are visible because you're signed in as Monash staff.</p></div>`;
+  }
   $("#step")?.addEventListener("input", (e) => show(+e.target.value));
   show(0);
 
@@ -652,13 +674,16 @@ function scatter(points) {
     <div class="legend" style="margin:.4rem 0 0"><span><i style="background:#2f9e6e"></i>4G</span><span><i style="background:#3f6fd8"></i>5G</span><span>Mbps on the vertical axis</span></div>`;
 }
 
-function toCsv(readings) {
-  const cols = ["postId", ...FIELDS.map((f) => f.key), "missing"];
+// restricted: staff export with cell ID, TAC and real identities. Public exports never include them.
+function toCsv(readings, { restricted = false } = {}) {
+  const cols = ["postId", ...FIELDS.map((f) => f.key), "missing", ...(restricted ? ["contributorName", "contributorEmail"] : [])];
   const cell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const rows = readings.map((r) => cols.map((c) => {
     if (c === "missing") return cell(Object.entries(r.na || {}).map(([k, why]) => `${k}=${why}`).join(";"));
-    if (c === "contributor") return cell(api.contributor(r.contributor).id ? pseudonym(r.contributor) : "deleted");
-    if (FIELD_BY_KEY[c]?.privacy === "restricted") return cell("");
+    if (c === "contributorName") return cell(api.identity(r.contributor).name);
+    if (c === "contributorEmail") return cell(api.identity(r.contributor).email);
+    if (c === "contributor") return cell(restricted ? r.contributor : api.contributor(r.contributor).id ? pseudonym(r.contributor) : "deleted");
+    if (FIELD_BY_KEY[c]?.privacy === "restricted" && !restricted) return cell("");
     return cell(r[c]);
   }).join(","));
   return [cols.join(","), ...rows].join("\n");
@@ -760,7 +785,7 @@ function viewMe(_, user) {
   const posts = new Set(mine.map((r) => r.postId)).size;
   view.innerHTML = `<div class="pad">
     <div class="profile">${avatar(me)}<div><h2 style="margin:0">${esc(user.name)}</h2>
-      <div class="small">${esc(user.email)}</div><div class="small">${esc(p.city)}, ${esc(COUNTRIES[p.cc].name)}${p.campus ? " · " + esc(p.campus) : ""}</div></div></div>
+      <div class="small">${esc(user.email)}${user.role === "admin" ? ` <span class="pill" style="background:var(--forest)">Monash staff</span>` : ""}</div><div class="small">${esc(p.city)}, ${esc(COUNTRIES[p.cc].name)}${p.campus ? " · " + esc(p.campus) : ""}</div></div></div>
     <div class="stats">
       <div class="stat"><b>${posts}</b><span>posts</span></div><div class="stat"><b>${mine.length}</b><span>readings</span></div>
     </div>
@@ -800,8 +825,178 @@ function viewMe(_, user) {
   $("#reset").onclick = () => { if (confirm("Reset the prototype to its sample data? You'll be signed out.")) { api.resetDemo(); go("login"); router(); } };
 }
 
+/* =========================================================================
+   Staff console (Monash admins only)
+   ========================================================================= */
+const ADMIN_TABS = [["overview", "Overview"], ["reports", "Reports"], ["users", "Users"], ["dataset", "Dataset"], ["audit", "Audit log"]];
+const adminState = { region: "", tech: "", q: "", userQ: "" };
+const SUPPORT_FIELDS = [["rsrp", "RSRP"], ["rsrq", "RSRQ"], ["rssi", "RSSI"], ["sinr", "SINR"], ["cqi", "CQI"], ["ta", "TA"], ["neighbours", "Nbrs"], ["nr", "5G"]];
+
+async function viewAdmin(tab = "overview", user) {
+  if (!api.isAdmin()) return go("feed");
+  const seq = routeSeq;
+  view.innerHTML = `<div class="chips">${ADMIN_TABS.map(([k, l]) => `<a class="chip-link" href="#/admin/${k}" aria-current="${k === tab ? "page" : "false"}">${l}</a>`).join("")}</div>
+    <div class="pad" id="admin"><div class="spinner">Loading...</div></div>`;
+  const box = $("#admin");
+  const fn = { overview: adminOverview, reports: adminReports, users: adminUsers, dataset: adminDataset, audit: adminAudit }[tab] || adminOverview;
+  await fn(box, seq, user);
+}
+
+async function adminOverview(box, seq) {
+  const o = await api.adminOverview();
+  if (isStale(seq)) return;
+  const rs = api.readings();
+  const minuteKey = (r) => r.contributor + r.takenAt.slice(0, 16);
+  const dupes = Object.values(groupBy(rs.filter((r) => r.kind === "single"), minuteKey)).filter((v) => v.length > 1).length;
+  const checks = [
+    ["Low GPS accuracy (over 50 m)", rs.filter((r) => r.accuracy > 50).length, "Position may be wrong. Exclude or down-weight in spatial analysis."],
+    ["Precise location shared", rs.filter((r) => !r.coarse).length, "Coarse location was off. Check consent before publishing maps."],
+    ["Roaming readings", rs.filter((r) => r.roaming).length, "Phone was on a foreign network, so carrier comparisons may be skewed."],
+    ["Same person, same minute", dupes, "Possible double submissions."],
+    ["No signal metric (3G)", rs.filter((r) => r.tech === "3G").length, "RSSI only, not comparable with RSRP."],
+  ];
+  box.innerHTML = `
+    <div class="stats three">
+      <div class="stat"><b>${o.students}</b><span>students</span></div>
+      <div class="stat"><b>${o.activeWeek}</b><span>active this week</span></div>
+      <div class="stat"><b>${o.countries}</b><span>countries</span></div>
+      <div class="stat"><b>${o.posts}</b><span>posts</span></div>
+      <div class="stat"><b>${o.readings}</b><span>readings</span></div>
+      <a class="stat alert" href="#/admin/reports"><b>${o.openReports}</b><span>open reports</span></a>
+    </div>
+    <div class="card"><h3>Data quality checks</h3><ul class="list">${checks.map(([t, n, why]) => `
+      <li><span class="grow">${esc(t)}<div class="sub">${esc(why)}</div></span><b class="${n ? "warn" : ""}">${n}</b></li>`).join("")}</ul></div>
+    <div class="card"><h3>Field support by phone</h3><div class="table-wrap"><table class="grid matrix">
+      <tr><th>Phone</th>${SUPPORT_FIELDS.map(([, l]) => `<th>${l}</th>`).join("")}</tr>
+      ${DEVICES.filter((d) => !d.ios).map((d) => `<tr><td>${esc(d.model)}</td>${SUPPORT_FIELDS.map(([k]) => {
+        const ok = k === "nr" ? d.nr : !d.missing.includes(k);
+        return `<td><span class="dot ${ok ? "yes" : "no"}" title="${ok ? "Reported" : "Not reported"}"></span></td>`;
+      }).join("")}</tr>`).join("")}</table></div>
+      <p class="note">Green: the phone reports it. Red: always missing from that model. Use this to explain gaps before blaming the network.</p></div>
+    <div class="card"><h3>Accounts</h3><ul class="list">
+      <li><span class="grow">Total accounts</span><b>${o.users}</b></li>
+      <li><span class="grow">Waiting for email verification</span><b>${o.unverified}</b></li>
+      <li><span class="grow">Suspended</span><b>${o.suspended}</b></li></ul>
+      <a class="btn ghost" href="#/admin/users" style="margin-top:.6rem">Manage users</a></div>`;
+}
+
+async function adminReports(box, seq) {
+  const posts = await api.adminReports();
+  if (isStale(seq)) return;
+  if (!posts.length) { box.innerHTML = `<div class="empty">No open reports. Nice.</div>`; return; }
+  const tally = (reasons) => Object.entries(groupBy(reasons, (r) => r)).map(([k, v]) => `${v.length} ${k === "inaccurate" ? "bad data" : k}`).join(", ");
+  box.innerHTML = `<p class="lead">${posts.length} post${posts.length > 1 ? "s" : ""} reported by students. Reported posts stay visible to everyone except the reporter until you decide.</p>
+    ${posts.map((p) => `<div class="card report" data-id="${p.id}">
+      <div class="report-head"><span class="pill poor">${p.reportCount} report${p.reportCount > 1 ? "s" : ""}</span><span class="small">${esc(tally(p.reportReasons))}</span></div>
+      <div class="report-post">${postCard(p)}</div>
+      <table class="fields"><tr><th>Posted by</th><td>${esc(p.real.name)}<br><span class="small">${esc(p.real.email)}</span></td></tr></table>
+      <div class="row2" style="margin-top:.7rem"><button class="btn ghost" data-admin="dismiss">Keep post</button><button class="btn danger" data-admin="remove">Remove post</button></div>
+    </div>`).join("")}`;
+  box.querySelectorAll(".report-post .actions, .report-post .menu").forEach((n) => n.remove());
+  box.onclick = async (e) => {
+    const b = e.target.closest("button[data-admin]"); if (!b) return;
+    const card = b.closest(".report");
+    await busy(b, "...", () => api.resolveReport(card.dataset.id, b.dataset.admin));
+    toast(b.dataset.admin === "remove" ? "Post removed" : "Report dismissed");
+    card.remove();
+    if (!box.querySelector(".report")) box.innerHTML = `<div class="empty">No open reports. Nice.</div>`;
+  };
+}
+
+async function adminUsers(box, seq) {
+  const users = await api.adminUsers();
+  if (isStale(seq)) return;
+  box.innerHTML = `<input class="input" id="uq" placeholder="Search name, email or city" aria-label="Search users" value="${esc(adminState.userQ)}" style="margin:0 0 .8rem" />
+    <ul class="list user-list" id="ul"></ul>`;
+  const render = () => {
+    const q = adminState.userQ.toLowerCase();
+    const shown = users.filter((u) => !q || [u.name, u.email, PLACE_BY_ID[u.placeId].city].some((s) => s.toLowerCase().includes(q)));
+    $("#ul").innerHTML = shown.map((u) => {
+      const p = PLACE_BY_ID[u.placeId];
+      return `<li data-id="${u.id}"><details><summary>
+        ${avatar({ display: u.name, initial: u.name[0] }, "sm")}
+        <span class="grow">${esc(u.name)}${u.role === "admin" ? ` <span class="campus-tag">staff</span>` : ""}${u.status === "suspended" ? ` <span class="pill poor">suspended</span>` : ""}
+          <div class="sub">${esc(u.email)}</div></span><b>${u.readings}</b></summary>
+        <table class="fields" style="margin:.4rem 0 .6rem">
+          <tr><th>Studies from</th><td>${esc(p.city)}, ${esc(COUNTRIES[p.cc].name)}${p.campus ? `<br><span class="small">${esc(p.campus)}</span>` : ""}</td></tr>
+          <tr><th>Phone</th><td>${esc(u.device)}</td></tr>
+          <tr><th>Email verified</th><td>${u.verified ? "Yes" : "No"}</td></tr>
+          <tr><th>Location setting</th><td>${u.settings.coarse ? "Coarse (about 1 km)" : "Precise"}</td></tr>
+          <tr><th>Shown as</th><td>${u.settings.showName ? "Real name" : esc(pseudonym(u.id))}</td></tr>
+          <tr><th>Posts / readings</th><td>${u.posts} / ${u.readings}</td></tr>
+          <tr><th>Reports against</th><td>${u.reportsAgainst}</td></tr>
+          <tr><th>Joined</th><td>${new Date(u.joinedAt).toLocaleDateString()}</td></tr>
+          <tr><th>Last post</th><td>${u.lastActive ? ago(u.lastActive) + " ago" : "Never"}</td></tr>
+          <tr><th>User ID</th><td>${esc(u.id)}</td></tr></table>
+        ${u.role === "admin" ? "" : u.status === "suspended"
+          ? `<button class="btn ghost" data-status="active">Reactivate account</button>`
+          : `<button class="btn danger" data-status="suspended">Suspend account</button>`}
+      </details></li>`;
+    }).join("") || `<li class="sub">No users match.</li>`;
+  };
+  $("#uq").oninput = (e) => { adminState.userQ = e.target.value; render(); };
+  $("#ul").onclick = async (e) => {
+    const b = e.target.closest("button[data-status]"); if (!b) return;
+    const id = b.closest("li").dataset.id, status = b.dataset.status;
+    if (status === "suspended" && !confirm("Suspend this account? They won't be able to sign in or post.")) return;
+    await busy(b, "Saving...", () => api.setUserStatus(id, status));
+    users.find((u) => u.id === id).status = status;
+    toast(status === "suspended" ? "Account suspended" : "Account reactivated"); render();
+  };
+  render();
+}
+
+function adminDataset(box) {
+  box.innerHTML = `<div class="notice">Staff view. This table includes restricted fields (cell ID, TAC), precise coordinates and real identities. Use it for moderation and approved research only.</div>
+    <div class="filters">
+      <select id="ar" aria-label="Region"><option value="">All regions</option>${REGIONS.map((r) => `<option>${r}</option>`).join("")}</select>
+      <select id="at" aria-label="Technology"><option value="">All technologies</option><option>LTE</option><option value="NR-NSA">5G NSA</option><option value="NR-SA">5G SA</option><option>3G</option></select>
+    </div>
+    <input class="input" id="aq" placeholder="Filter by student, city, carrier or cell ID" aria-label="Filter readings" style="margin:0 0 .8rem" />
+    <p class="small" id="acount"></p>
+    <div class="table-wrap" style="margin:.5rem 0 1rem"><table class="grid" id="atable"></table></div>
+    <button class="btn" id="aexport">Download restricted CSV</button>
+    <p class="note">Every restricted export is written to the audit log.</p>`;
+  $("#ar").value = adminState.region; $("#at").value = adminState.tech; $("#aq").value = adminState.q;
+  let rows = [];
+  const render = () => {
+    const q = adminState.q.toLowerCase();
+    rows = api.readings({ region: adminState.region, tech: adminState.tech })
+      .map((r) => ({ r, who: api.identity(r.contributor) }))
+      .filter(({ r, who }) => !q || [who.name, who.email, r.city, r.carrier, String(r.cellId)].some((s) => String(s).toLowerCase().includes(q)))
+      .sort((a, b) => (b.r.takenAt > a.r.takenAt ? 1 : -1));
+    $("#acount").textContent = `${rows.length} readings${rows.length > 80 ? ", showing the latest 80" : ""}. Tap a row to open the post.`;
+    $("#atable").innerHTML = `<tr><th>When</th><th>Student</th><th>Place</th><th>Carrier</th><th>Tech</th><th>Signal</th><th>Cell ID</th><th>TAC</th><th>PCI</th><th>Lat, lon</th><th>Acc.</th><th>Phone</th></tr>` +
+      rows.slice(0, 80).map(({ r, who }) => {
+        const h = headline(r);
+        return `<tr data-post="${r.postId}"><td>${ago(r.takenAt)}</td><td>${esc(who.name)}</td><td>${esc(r.city)}</td><td>${esc(r.carrier)} ${r.mcc}-${r.mnc}</td>
+          <td>${esc(r.tech)}</td><td><span class="pill ${quality(r)}">${h.value}</span></td><td>${r.cellId ?? "-"}</td><td>${r.tac ?? "-"}</td><td>${r.pci ?? "-"}</td>
+          <td>${r.lat}, ${r.lon}${r.coarse ? " *" : ""}</td><td>${r.accuracy} m</td><td>${esc(r.model)}</td></tr>`;
+      }).join("");
+  };
+  $("#ar").onchange = (e) => { adminState.region = e.target.value; render(); };
+  $("#at").onchange = (e) => { adminState.tech = e.target.value; render(); };
+  $("#aq").oninput = (e) => { adminState.q = e.target.value; render(); };
+  $("#atable").onclick = (e) => { const tr = e.target.closest("tr[data-post]"); if (tr) go("post/" + tr.dataset.post); };
+  $("#aexport").onclick = () => {
+    if (!confirm(`Export ${rows.length} readings with identities and restricted fields? This is logged.`)) return;
+    api.logExport(rows.length);
+    download(`signal-club-restricted-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(rows.map((x) => x.r), { restricted: true }), "text/csv");
+    toast("Export logged");
+  };
+  render();
+}
+
+async function adminAudit(box, seq) {
+  const log = await api.adminAudit();
+  if (isStale(seq)) return;
+  box.innerHTML = `<p class="lead">Every staff action that touches student data or accounts.</p>
+    <div class="card"><ul class="list">${log.map((a) => `<li><span class="grow">${esc(a.action)}<div class="sub">${esc(a.detail)} · ${esc(a.admin)}</div></span><span class="small">${ago(a.at)}</span></li>`).join("")
+      || `<li class="sub">Nothing yet. Removing posts, suspending users and restricted exports show up here.</li>`}</ul></div>`;
+}
+
 /* ---------- boot ---------- */
 const ROUTES = { login: viewLogin, register: viewRegister, verify: viewVerify, feed: viewFeed, post: viewPost, map: viewMap,
-  record: viewRecord, insights: viewInsights, data: viewData, me: viewMe };
+  record: viewRecord, insights: viewInsights, data: viewData, me: viewMe, admin: viewAdmin };
 window.addEventListener("hashchange", router);
 router();

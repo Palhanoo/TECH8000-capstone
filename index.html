@@ -48,16 +48,16 @@
   .intro p { color: var(--mist); }
   .proto-link {
     display: inline-block;
-    margin-top: 1.25rem;
+    margin-top: 1.5rem;
     padding: 0.7rem 1.25rem;
     border-radius: 999px;
-    background: var(--marigold);
-    color: var(--ink);
+    background: var(--cobalt);
+    color: #fff;
     font-weight: 700;
     text-decoration: none;
   }
-  .proto-link:hover { background: #fff; }
-  .proto-link:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+  .proto-link:hover { background: var(--cobalt-deep); }
+  .proto-link:focus-visible { outline: 3px solid var(--marigold); outline-offset: 3px; }
 
   .layout {
     display: grid;
@@ -215,7 +215,6 @@
     <header class="intro">
       <h1>TECH8000 Capstone team</h1>
       <p>Meet the people behind our capstone project. Select a name to read their profile.</p>
-      <a class="proto-link" href="prototype/index.html">See our prototype: Signal Club</a>
     </header>
 
     <div class="layout">
@@ -245,6 +244,7 @@
  *   about      two or three sentences
  *   skills     list of skills
  *   experience, outsideWork, nextGoal   one short line each
+ *   prototype  optional { label, href } link to this person's prototype app
  *                                      (experience can also be a list of jobs)
  */
 const team = [
@@ -262,6 +262,7 @@ const team = [
     experience: "Worked in the restaurant and hospitality industry",
     outsideWork: "Playing games",
     nextGoal: "Quantum computing",
+    prototype: { label: "Bruno's prototype: Signal Club", href: "prototypes/bruno/index.html" },
   },
   {
     id: "josh",
@@ -406,6 +407,12 @@ function showProfile(member, animate) {
   if (member.outsideWork) facts.appendChild(factRow("Outside work", member.outsideWork));
   if (member.nextGoal) facts.appendChild(factRow("Next goal", member.nextGoal));
   sheet.appendChild(facts);
+
+  if (member.prototype) {
+    const link = el("a", "proto-link", member.prototype.label);
+    link.href = member.prototype.href;
+    sheet.appendChild(link);
+  }
 
   if (animate) {
     sheet.classList.remove("swap");

@@ -2,8 +2,8 @@
 // would be against a real API. Data lives in localStorage; swap this file for fetch()
 // calls to a real server and the views don't need to change.
 
-const DB_KEY = "gdds-signal-db-v2";
-const SESSION_KEY = "gdds-signal-session-v2";
+const DB_KEY = "gdds-signal-db-v3";
+const SESSION_KEY = "gdds-signal-session-v3";
 const MONASH_EMAIL = /^[^\s@]+@(student\.)?monash\.edu$/i;
 
 class ApiError extends Error {
@@ -14,7 +14,7 @@ let db = loadDb();
 function loadDb() {
   try {
     const d = JSON.parse(localStorage.getItem(DB_KEY));
-    if (d && d.version === 2) return d;
+    if (d && d.version === DB_VERSION) return d;
   } catch { /* fall through to a fresh seed */ }
   const fresh = seedDb();
   localStorage.setItem(DB_KEY, JSON.stringify(fresh));
@@ -44,17 +44,37 @@ function publicUser(u) {
   const display = u.settings.showName ? u.name : pseudonym(u.id);
   return { id: u.id, display, initial: u.settings.showName ? u.name[0] : "#", place: PLACE_BY_ID[u.placeId] };
 }
-function currentUser() { return userById(localStorage.getItem(SESSION_KEY)) || null; }
+function currentUser() {
+  const u = userById(localStorage.getItem(SESSION_KEY));
+  return u && u.status !== "suspended" ? u : null;
+}
+const isAdmin = (u) => u?.role === "admin";
 function requireUser() {
   const u = currentUser();
   if (!u) throw new ApiError("Please sign in again.", "unauthenticated");
   return u;
 }
+function requireAdmin() {
+  const u = requireUser();
+  if (!isAdmin(u)) throw new ApiError("Only Monash staff can see this page.", "forbidden");
+  return u;
+}
+function audit(admin, action, target, detail = "") {
+  (db.audit ||= []).unshift({ at: new Date().toISOString(), adminId: admin.id, action, target, detail });
+}
+// Real identity behind a post. Only ever attached for admins.
+function realIdentity(id) {
+  const u = userById(id);
+  return u ? { id: u.id, name: u.name, email: u.email, status: u.status } : { id, name: "Deleted account", email: "", status: "deleted" };
+}
 function decoratePost(p, me) {
+  const admin = isAdmin(me);
   return {
     ...p, author: publicUser(userById(p.userId)), mine: !!me && p.userId === me.id,
     liked: !!me && p.likes.includes(me.id), likeCount: p.likes.length,
     comments: p.comments.map((c) => ({ ...c, author: publicUser(userById(c.userId)) })),
+    reportCount: p.reports.length,
+    ...(admin ? { real: realIdentity(p.userId), reportReasons: p.reportReasons || [] } : { reports: [], reportReasons: [] }),
   };
 }
 function postRegion(p) { return COUNTRIES[PLACES.find((x) => x.city === p.readings[0].city)?.cc]?.region; }
@@ -62,6 +82,7 @@ function postRegion(p) { return COUNTRIES[PLACES.find((x) => x.city === p.readin
 const api = {
   /* ---------- auth ---------- */
   session: currentUser,
+  isAdmin: () => isAdmin(currentUser()),
   publicUser,
   contributor: (id) => publicUser(userById(id)),
 
@@ -106,13 +127,14 @@ const api = {
     await wait();
     const u = db.users.find((x) => x.email === email.trim().toLowerCase());
     if (!u || !u.passHash || !(await passwordMatches(u, password))) throw new ApiError("Email or password is incorrect.");
+    if (u.status === "suspended") throw new ApiError("This account is suspended. Contact the GDDS teaching team.");
     if (!u.verified) throw new ApiError("Please verify your email first.", "unverified");
     localStorage.setItem(SESSION_KEY, u.id);
     return u;
   },
 
-  // Stand-in for Monash single sign-on: signs in as the demo account.
-  async monashSso() { await wait(600); localStorage.setItem(SESSION_KEY, "u_demo"); return userById("u_demo"); },
+  // Stand-in for Monash single sign-on: signs in as the Monash staff (admin) account.
+  async monashSso() { await wait(600); localStorage.setItem(SESSION_KEY, "u_admin"); return userById("u_admin"); },
 
   logout() { localStorage.removeItem(SESSION_KEY); },
 
@@ -120,7 +142,7 @@ const api = {
   async feed({ region = "", campusOnly = false, offset = 0, limit = 15 } = {}) {
     await wait();
     const me = currentUser();
-    const all = db.posts.filter((p) => !p.reports.includes(me?.id))
+    const all = db.posts.filter((p) => isAdmin(me) || !p.reports.includes(me?.id))
       .filter((p) => (!region || postRegion(p) === region) && (!campusOnly || p.readings[0].campus));
     return { items: all.slice(offset, offset + limit).map((p) => decoratePost(p, me)), total: all.length };
   },
@@ -144,8 +166,9 @@ const api = {
   async deletePost(id) {
     await wait();
     const me = requireUser();
-    const i = db.posts.findIndex((p) => p.id === id && p.userId === me.id);
+    const i = db.posts.findIndex((p) => p.id === id && (p.userId === me.id || isAdmin(me)));
     if (i < 0) throw new ApiError("You can only delete your own posts.");
+    if (db.posts[i].userId !== me.id) audit(me, "Removed post", id, realIdentity(db.posts[i].userId).email);
     db.posts.splice(i, 1); persist();
   },
 
@@ -219,6 +242,71 @@ const api = {
     for (const p of db.posts) { p.comments = p.comments.filter((c) => c.userId !== me.id); p.likes = p.likes.filter((x) => x !== me.id); }
     db.users = db.users.filter((u) => u.id !== me.id);
     persist(); this.logout();
+  },
+
+  /* ---------- admin (Monash staff) ---------- */
+  identity(id) { requireAdmin(); return realIdentity(id); },
+
+  async adminOverview() {
+    await wait();
+    requireAdmin();
+    const weekAgo = Date.now() - 7 * 864e5, readings = this.readings();
+    return {
+      users: db.users.length, students: db.users.filter((u) => u.role !== "admin").length,
+      unverified: db.users.filter((u) => !u.verified).length, suspended: db.users.filter((u) => u.status === "suspended").length,
+      activeWeek: new Set(readings.filter((r) => new Date(r.takenAt) > weekAgo).map((r) => r.contributor)).size,
+      posts: db.posts.length, readings: readings.length, openReports: db.posts.filter((p) => p.reports.length).length,
+      countries: new Set(readings.map((r) => r.country)).size,
+    };
+  },
+
+  async adminReports() {
+    await wait();
+    const me = requireAdmin();
+    return db.posts.filter((p) => p.reports.length).sort((a, b) => b.reports.length - a.reports.length).map((p) => decoratePost(p, me));
+  },
+
+  async resolveReport(id, action) {
+    await wait();
+    const me = requireAdmin(), i = db.posts.findIndex((p) => p.id === id);
+    if (i < 0) throw new ApiError("That post no longer exists.");
+    const p = db.posts[i], who = realIdentity(p.userId).email;
+    if (action === "remove") { db.posts.splice(i, 1); audit(me, "Removed reported post", id, who); }
+    else { audit(me, "Dismissed report", id, `${p.reports.length} report(s) on ${who}`); p.reports = []; p.reportReasons = []; }
+    persist();
+  },
+
+  async adminUsers() {
+    await wait();
+    requireAdmin();
+    const readings = this.readings();
+    return db.users.map((u) => {
+      const mine = db.posts.filter((p) => p.userId === u.id);
+      return {
+        id: u.id, name: u.name, email: u.email, role: u.role, status: u.status, verified: u.verified, placeId: u.placeId,
+        device: u.device, settings: u.settings, joinedAt: u.joinedAt, posts: mine.length,
+        readings: readings.filter((r) => r.contributor === u.id).length,
+        reportsAgainst: mine.reduce((n, p) => n + p.reports.length, 0),
+        lastActive: mine[0]?.createdAt || null,
+      };
+    }).sort((a, b) => b.readings - a.readings);
+  },
+
+  async setUserStatus(id, status) {
+    await wait();
+    const me = requireAdmin();
+    if (id === me.id) throw new ApiError("You can't suspend your own account.");
+    const u = userById(id);
+    u.status = status; audit(me, status === "suspended" ? "Suspended user" : "Reactivated user", id, u.email);
+    persist();
+  },
+
+  logExport(rows) { const me = requireAdmin(); audit(me, "Restricted export", "dataset", `${rows} readings incl. cell ID, TAC and identities`); persist(); },
+
+  async adminAudit() {
+    await wait();
+    requireAdmin();
+    return (db.audit || []).map((a) => ({ ...a, admin: userById(a.adminId)?.name || "Former admin" }));
   },
 
   resetDemo() { localStorage.removeItem(DB_KEY); localStorage.removeItem(SESSION_KEY); db = loadDb(); },

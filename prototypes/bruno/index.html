@@ -13,7 +13,7 @@
 <div class="app">
   <header class="top">
     <button class="icon-btn" id="back" hidden aria-label="Back"><svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-    <div class="titles"><small>Monash GDDS · Global</small><h1 id="title">Signal Club</h1></div>
+    <div class="titles"><small id="kicker">Monash GDDS · Global</small><h1 id="title">Signal Club</h1></div>
     <a class="me-badge" id="me-badge" href="#/me" hidden aria-label="Your profile"></a>
   </header>
 
@@ -24,6 +24,7 @@
     <a href="#/map" data-tab="map"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>Map</a>
     <a href="#/record" data-tab="record" class="rec"><span class="bubble"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Record</a>
     <a href="#/insights" data-tab="insights"><svg class="i" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Insights</a>
+    <a href="#/admin" data-tab="admin" id="tab-admin" hidden><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Staff</a>
     <a href="#/me" data-tab="me"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Me</a>
   </nav>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

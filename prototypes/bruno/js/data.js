@@ -94,6 +94,7 @@ const DEVICES = [
 const DEVICE_BY_MODEL = Object.fromEntries(DEVICES.map((d) => [d.model, d]));
 
 const APP_VERSION = "0.9.0-prototype";
+const DB_VERSION = 3;
 const CONSENT_VERSION = "2026-11";
 
 /* ---------- maths helpers ---------- */
@@ -269,12 +270,13 @@ function seedDb() {
   const rnd = makeRng(20261118), now = Date.now(), DAY = 864e5;
   const users = SEED_PEOPLE.map(([name, placeId], i) => ({
     id: uid("u", rnd), name, email: name.split(" ")[0].toLowerCase() + "." + (1000 + i) + "@student.monash.edu",
-    placeId, device: pickFrom(rnd, DEVICES.slice(0, 6)).model, verified: true, passHash: null,
+    placeId, device: pickFrom(rnd, DEVICES.slice(0, 6)).model, verified: true, passHash: null, role: "student", status: "active",
     settings: { coarse: rnd() < 0.8, showName: rnd() < 0.85 }, joinedAt: new Date(now - (30 + rnd() * 60) * DAY).toISOString(),
   }));
   users.push({
     id: "u_demo", name: "Demo Student", email: "demo@student.monash.edu", placeId: "clayton", device: "Google Pixel 8",
-    verified: true, passHash: "demo:monash123", settings: { coarse: true, showName: true }, joinedAt: new Date(now - 20 * DAY).toISOString(),
+    verified: true, passHash: "demo:monash123", role: "student", status: "active",
+    settings: { coarse: true, showName: true }, joinedAt: new Date(now - 20 * DAY).toISOString(),
   });
 
   const posts = [];
@@ -317,5 +319,21 @@ function seedDb() {
     });
   }
   posts.sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1));
-  return { version: 2, users, posts };
+
+  // A few open reports so the moderation queue has something in it.
+  const REASONS = ["inaccurate", "inaccurate", "inappropriate"];
+  for (const p of posts.filter(() => rnd() < 0.04)) {
+    const reporters = users.filter((u) => u.id !== p.userId && u.id !== "u_demo" && rnd() < 0.1).slice(0, 3);
+    if (!reporters.length) continue;
+    p.reports = reporters.map((u) => u.id);
+    p.reportReasons = reporters.map(() => pickFrom(rnd, REASONS));
+  }
+
+  // Monash staff account. Signs in through "Continue with Monash" and sees restricted data.
+  users.push({
+    id: "u_admin", name: "Monash Admin", email: "admin@monash.edu", placeId: "clayton", device: "Google Pixel 8",
+    verified: true, passHash: "demo:admin123", role: "admin", status: "active",
+    settings: { coarse: false, showName: true }, joinedAt: new Date(now - 90 * DAY).toISOString(),
+  });
+  return { version: DB_VERSION, users, posts, audit: [] };
 }
