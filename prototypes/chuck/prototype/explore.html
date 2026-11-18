@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-surface" lang="en"><head><title>Explore · Monash DataConnect</title><meta name="theme-color" content="#ffffff"><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "error-container": "#ffdad6", "on-tertiary-container": "#ffdad8", "on-primary-container": "#ffdad8", "primary": "#9e001f", "on-surface-variant": "#5c403f", "primary-fixed-dim": "#ffb3b1", "on-error-container": "#93000a", "secondary-fixed-dim": "#c7c6c6", "background": "#fcf9f8", "on-secondary": "#ffffff", "surface-container-high": "#eae7e7", "surface-tint": "#bf0229", "on-surface": "#1b1b1c", "on-tertiary": "#ffffff", "outline": "#906f6e", "surface": "#fcf9f8", "secondary": "#5e5e5e", "on-secondary-fixed": "#1b1c1c", "error": "#ba1a1a", "tertiary": "#9c0722", "on-tertiary-fixed": "#410007", "inverse-surface": "#303030", "surface-variant": "#e5e2e1", "secondary-fixed": "#e4e2e2", "on-primary": "#ffffff", "tertiary-fixed": "#ffdad8", "on-primary-fixed-variant": "#92001c", "inverse-primary": "#ffb3b1", "surface-container": "#f0eded", "on-error": "#ffffff", "tertiary-container": "#bf2837", "tertiary-fixed-dim": "#ffb3b1", "surface-container-highest": "#e5e2e1", "primary-fixed": "#ffdad8", "outline-variant": "#e5bdbb", "on-primary-fixed": "#410007", "on-secondary-container": "#626262", "on-background": "#1b1b1c", "surface-container-lowest": "#ffffff", "surface-bright": "#fcf9f8", "surface-container-low": "#f6f3f2", "primary-container": "#c8102e", "on-secondary-fixed-variant": "#464747", "inverse-on-surface": "#f3f0ef", "surface-dim": "#dcd9d9", "secondary-container": "#e1dfdf", "on-tertiary-fixed-variant": "#92001d" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xl": "2.25rem", "space-sm": "0.5rem", "margin-tablet": "2rem", "gutter-tablet": "1.5rem", "space-md": "1rem", "space-xs": "0.25rem", "gutter": "1rem", "space-lg": "1.5rem", "margin": "1.25rem" }, fontFamily: { "body-sm": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "body-lg": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "label-lg": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"] }, fontSize: { "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }], "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }], "label-md": ["13px", { "lineHeight": "18px", "fontWeight": "500" }], "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-md": ["14px", { "lineHeight": "21px", "fontWeight": "400" }], "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }] } } } }</script><style>@layer base{html,body{min-height:100%;margin:0;padding:0;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="min-h-full bg-surface text-on-surface font-body-md text-body-md antialiased flex flex-col"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)]"><div class="h-16 px-margin flex items-center justify-between max-w-screen-md mx-auto"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[20px]">hub</span></div><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight truncate">Monash DataConnect</span></div><div class="flex items-center gap-space-xs"><button aria-label="Notifications" class="w-11 h-11 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 w-full bg-surface pt-16 pb-24 max-w-screen-md mx-auto px-margin"><div class="flex flex-col w-full pb-6 space-y-4">
+<!-- Header Intro & Global Telemetry Pulse -->
+<div class="flex flex-col space-y-1">
+<div class="flex items-center justify-between">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight">Explore global data</h1>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+<span>24 Countries Live</span>
+</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+      Real-world mobile network readings from classmates in 24 countries.
+    </p>
+</div>
+<!-- Filter & Controls Toolbar -->
+<div class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between gap-2">
+<!-- Challenge Selector Dropdown -->
+<button class="flex-1 flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-surface-container-lowest shadow-sm hover:bg-surface-container-low transition-colors text-left">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-primary shrink-0">dataset</span>
+<span class="font-label-md text-label-md text-on-surface truncate">Indoor vs Outdoor Challenge</span>
+</div>
+<span class="material-symbols-outlined text-[18px] text-secondary shrink-0">expand_more</span>
+</button>
+<!-- Advanced Filter Trigger -->
+<button class="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-surface-container-lowest shadow-sm text-on-surface hover:bg-surface-container-low transition-colors shrink-0">
+<span class="material-symbols-outlined text-[18px] text-secondary">tune</span>
+<span class="font-label-md text-label-md">Filters</span>
+<span class="w-5 h-5 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm flex items-center justify-center font-bold">2</span>
+</button>
+</div>
+<!-- View Switcher Tabs -->
+<div class="flex items-center p-1 rounded-xl bg-surface-container w-full">
+<button class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm transition-all" id="view-map-btn">
+<span class="material-symbols-outlined text-[18px] text-primary">public</span>
+<span>Map View</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-secondary hover:text-on-surface font-label-md text-label-md transition-all" id="view-chart-btn">
+<span class="material-symbols-outlined text-[18px]">bar_chart</span>
+<span>Signal Distribution</span>
+</button>
+</div>
+</div>
+<!-- Warm Minimalist Interactive Map Card -->
+<div class="relative w-full rounded-2xl bg-surface-container-low p-3.5 shadow-sm overflow-hidden">
+<!-- Map Surface Representation -->
+<div class="relative w-full h-[290px] rounded-xl overflow-hidden bg-[#e9e6e0]">
+<!-- Tactile Minimal World Map Canvas -->
+<svg class="absolute inset-0 w-full h-full object-cover select-none" fill="none" viewbox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialgradient cx="50%" cy="50%" id="meshGrad" r="60%">
+<stop offset="0%" stop-color="#f5f2eb" stop-opacity="0.9"></stop>
+<stop offset="100%" stop-color="#dedad2" stop-opacity="0.95"></stop>
+</radialgradient>
+</defs>
+<rect fill="url(#meshGrad)" height="500" width="1000"></rect>
+<!-- Lat/Long Subdued Organic Grid -->
+<path d="M0,125 Q500,105 1000,125 M0,250 Q500,240 1000,250 M0,375 Q500,385 1000,375" opacity="0.6" stroke="#d5cfc5" stroke-dasharray="4 6" stroke-width="1"></path>
+<path d="M200,0 C210,250 200,500 200,500 M400,0 C420,250 410,500 410,500 M600,0 C590,250 600,500 600,500 M800,0 C810,250 800,500 800,500" opacity="0.6" stroke="#d5cfc5" stroke-dasharray="4 6" stroke-width="1"></path>
+<!-- Simplified Warm Stylized Continents -->
+<!-- North America -->
+<path d="M140,80 Q200,60 260,85 Q300,120 280,180 Q230,220 200,270 Q170,220 130,170 Q110,120 140,80 Z" fill="#cfcac0"></path>
+<!-- South America -->
+<path d="M260,280 Q320,290 340,360 Q320,440 280,480 Q250,420 240,350 Z" fill="#cfcac0"></path>
+<!-- Europe & Northern Africa -->
+<path d="M470,80 Q550,70 570,120 Q520,160 480,140 Q450,110 470,80 Z" fill="#cfcac0"></path>
+<!-- Africa -->
+<path d="M480,170 Q560,160 590,240 Q570,360 520,410 Q470,350 460,250 Z" fill="#cfcac0"></path>
+<!-- Asia -->
+<path d="M580,70 Q750,50 850,130 Q880,220 780,260 Q700,270 630,200 Q590,130 580,70 Z" fill="#cfcac0"></path>
+<!-- Australia -->
+<path d="M780,330 Q870,320 890,390 Q850,440 770,420 Q750,370 780,330 Z" fill="#cfcac0"></path>
+</svg>
+<!-- Connecting Telemetry Arcs (Global Classmate Links) -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none" viewbox="0 0 1000 500">
+<path d="M840,160 Q660,240 540,290" fill="none" opacity="0.45" stroke="#9e001f" stroke-dasharray="3 5" stroke-width="1.5"></path>
+<path d="M840,160 Q810,260 830,370" fill="none" opacity="0.55" stroke="#9e001f" stroke-dasharray="3 5" stroke-width="1.5"></path>
+<path d="M510,130 Q680,140 840,160" fill="none" opacity="0.35" stroke="#9e001f" stroke-dasharray="3 5" stroke-width="1.5"></path>
+</svg>
+<!-- Interactive Data Pins -->
+<!-- Berlin (Moderate) -->
+<button aria-label="Berlin reading" class="absolute top-[26%] left-[51%] -translate-x-1/2 -translate-y-1/2 group focus:outline-none">
+<span class="absolute -inset-2 rounded-full bg-[#f59e0b]/20 animate-pulse"></span>
+<span class="relative flex items-center justify-center w-6 h-6 rounded-full bg-surface-container-lowest shadow-md text-[#d97706]">
+<span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span>
+</span>
+</button>
+<!-- Nairobi (Strong) -->
+<button aria-label="Nairobi reading" class="absolute top-[58%] left-[54%] -translate-x-1/2 -translate-y-1/2 group focus:outline-none">
+<span class="relative flex items-center justify-center w-5 h-5 rounded-full bg-surface-container-lowest shadow-md text-[#16a34a]">
+<span class="w-2.5 h-2.5 rounded-full bg-[#16a34a]"></span>
+</span>
+</button>
+<!-- São Paulo (Weak) -->
+<button aria-label="São Paulo reading" class="absolute top-[72%] left-[29%] -translate-x-1/2 -translate-y-1/2 group focus:outline-none">
+<span class="relative flex items-center justify-center w-5 h-5 rounded-full bg-surface-container-lowest shadow-md text-error">
+<span class="w-2.5 h-2.5 rounded-full bg-error"></span>
+</span>
+</button>
+<!-- Singapore (Strong) -->
+<button aria-label="Singapore reading" class="absolute top-[52%] left-[73%] -translate-x-1/2 -translate-y-1/2 group focus:outline-none">
+<span class="relative flex items-center justify-center w-5 h-5 rounded-full bg-surface-container-lowest shadow-md text-[#16a34a]">
+<span class="w-2.5 h-2.5 rounded-full bg-[#16a34a]"></span>
+</span>
+</button>
+<!-- Melbourne (Clayton Campus - Strong) -->
+<button aria-label="Melbourne reading" class="absolute top-[75%] left-[83%] -translate-x-1/2 -translate-y-1/2 group focus:outline-none">
+<span class="relative flex items-center justify-center w-6 h-6 rounded-full bg-surface-container-lowest shadow-md text-[#16a34a]">
+<span class="w-3 h-3 rounded-full bg-[#16a34a]"></span>
+</span>
+</button>
+<!-- ACTIVE SELECTION: Tokyo Shibuya (Strong 5G, Elevated Marker with Monash Halo) -->
+<div class="absolute top-[32%] left-[84%] -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center">
+<!-- Pulse Rings -->
+<span class="absolute w-10 h-10 rounded-full bg-primary/20 animate-ping"></span>
+<span class="absolute w-8 h-8 rounded-full bg-primary/30"></span>
+<!-- Distinct Active Marker Target -->
+<div class="relative w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg ring-offset-2">
+<span class="material-symbols-outlined text-[18px]">cell_tower</span>
+</div>
+<!-- Floating Live Flag Label -->
+<div class="mt-1 px-2 py-0.5 rounded-md bg-surface-container-lowest shadow-sm flex items-center gap-1">
+<span class="text-label-sm">🇯🇵</span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Tokyo</span>
+</div>
+</div>
+<!-- Campus Overlay Badge -->
+<div class="absolute bottom-2.5 left-2.5 bg-surface-container-lowest/90 backdrop-blur-md px-2.5 py-1.5 rounded-lg shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[16px]">school</span>
+<span class="font-label-sm text-label-sm text-on-surface">Prato • Clayton • Sunway Sync</span>
+</div>
+<!-- Recenter Button -->
+<button aria-label="Recenter map" class="absolute bottom-2.5 right-2.5 w-8 h-8 rounded-lg bg-surface-container-lowest/90 backdrop-blur-md shadow-sm flex items-center justify-center text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]">my_location</span>
+</button>
+</div>
+<!-- Signal Quality Legend Bar -->
+<div class="mt-3 pt-2.5 flex items-center justify-between px-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-[#16a34a] shadow-xs"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Strong <span class="hidden sm:inline font-normal">(-70 to -85 dBm)</span></span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b] shadow-xs"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Moderate <span class="hidden sm:inline font-normal">(-86 to -105)</span></span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-error shadow-xs"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Weak <span class="hidden sm:inline font-normal">(-106+ dBm)</span></span>
+</div>
+</div>
+</div>
+<!-- Interactive Data Reading Sheet (Active Selection: Tokyo Shibuya) -->
+<section class="w-full rounded-2xl bg-surface-container-lowest p-5 shadow-sm space-y-4">
+<!-- Header with Sheet Indicator Handle -->
+<div class="flex flex-col space-y-3">
+<div class="w-10 h-1 rounded-full bg-surface-container-highest mx-auto -mt-1 opacity-70"></div>
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-[22px] shrink-0">
+            🇯🇵
+          </div>
+<div>
+<div class="flex items-center gap-1.5">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Tokyo, Japan</h2>
+<span class="px-1.5 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-secondary">Shibuya</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              Contributed by <span class="font-medium text-on-surface">Kenji T.</span> • 2 hours ago
+            </p>
+</div>
+</div>
+<button aria-label="Bookmark reading" class="w-8 h-8 rounded-full flex items-center justify-center text-secondary hover:text-on-surface hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">bookmark_border</span>
+</button>
+</div>
+</div>
+<!-- Telemetry Cards Grid -->
+<div class="grid grid-cols-2 gap-2.5">
+<!-- Measurement Metric -->
+<div class="p-3.5 rounded-xl bg-surface-container-low flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Signal Strength</span>
+<div class="flex items-baseline gap-1.5 mt-1.5">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">-82</span>
+<span class="font-label-sm text-label-sm text-secondary">dBm</span>
+</div>
+<div class="flex items-center gap-1.5 mt-2">
+<span class="w-2 h-2 rounded-full bg-[#16a34a]"></span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">5G • Strong</span>
+</div>
+</div>
+<!-- Environment Metric -->
+<div class="p-3.5 rounded-xl bg-surface-container-low flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Test Context</span>
+<div class="flex items-center gap-1.5 mt-1.5">
+<span class="material-symbols-outlined text-[18px] text-primary">directions_walk</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Outdoors</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary mt-1 line-clamp-1">Station Pedestrian Walkway</p>
+</div>
+</div>
+<!-- Qualitative Observation Note (Peer Insight Snippet) -->
+<div class="p-3.5 rounded-xl bg-surface-container-low flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5">format_quote</span>
+<div class="space-y-1">
+<span class="font-label-sm text-label-sm text-secondary font-medium">Field Observation</span>
+<p class="font-body-md text-body-md text-on-surface italic leading-relaxed">
+          “Clear 5G line-of-sight near the station crossing, much stronger than my apartment.”
+        </p>
+</div>
+</div>
+<!-- Peer Environmental Snapshot -->
+<div class="relative w-full h-24 rounded-xl overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A sunny Tokyo Shibuya pedestrian walkway looking toward the crossing with modern street light poles, gentle natural daylight, and clean architectural lines." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1-i0b0FTLMEjnIMjojNCfR48S-y6GCCe9mljsynYMA5SP3MNp0zWH3y2kY8I1TziUhX7GH1b1wbKGMFZA4lDuALSTyJ1hcLELa07BJLWIeMo2jd-QT-hl-cnUOVQkuTc_hqt3hYiT8o0LZagekvHWEuuNNa2MsOnE8KsC2Orpv9g1i2uyoQa8XsTo7UZldEf0GMWxC_wlFLE-Ac8Hf0JzW_p9oE3PLMLbAYedcwY"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-2.5">
+<span class="font-label-sm text-label-sm text-white flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">photo_camera</span> Attached environment capture (Shibuya 2-chōme)
+        </span>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-2.5 pt-1">
+<div class="flex items-center gap-2">
+<!-- Monash Crimson Primary Button -->
+<button class="flex-1 min-h-[48px] px-4 rounded-xl bg-primary-container text-on-primary font-label-lg text-label-lg flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all hover:bg-primary">
+<span class="material-symbols-outlined text-[19px]">compare_arrows</span>
+<span>Compare with my result</span>
+</button>
+<!-- Soft Neutral Secondary Button -->
+<button class="min-h-[48px] px-4 rounded-xl bg-surface-container text-on-surface hover:bg-surface-container-high font-label-lg text-label-lg flex items-center justify-center gap-1.5 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-[19px] text-secondary">chat_bubble_outline</span>
+<span>Ask</span>
+</button>
+</div>
+<!-- Text Link to Deep Compare -->
+<a class="w-full py-1 text-center font-label-md text-label-md text-primary hover:underline flex items-center justify-center gap-1" href="#">
+<span>Compare locations</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</section>
+<!-- Community Activity Prompt Ribbon -->
+<div class="rounded-xl bg-surface-container-low p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container-lowest flex items-center justify-center text-primary shadow-xs">
+<span class="material-symbols-outlined text-[20px]">insights</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Are you near Sunway or Clayton?</p>
+<p class="font-body-sm text-body-sm text-secondary">3 new student readings match your course unit.</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-[20px]">chevron_right</span>
+</div>
+</div>
+<script>
+  // Simple micro-interaction for view switching
+  const mapBtn = document.getElementById('view-map-btn');
+  const chartBtn = document.getElementById('view-chart-btn');
+
+  if (mapBtn && chartBtn) {
+    chartBtn.addEventListener('click', () => {
+      chartBtn.className = "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm transition-all";
+      mapBtn.className = "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-secondary hover:text-on-surface font-label-md text-label-md transition-all";
+    });
+
+    mapBtn.addEventListener('click', () => {
+      mapBtn.className = "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm transition-all";
+      chartBtn.className = "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-secondary hover:text-on-surface font-label-md text-label-md transition-all";
+    });
+  }
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_20px_-2px_rgba(30,30,30,0.04)]" data-active-classes="text-primary font-label-md"><div class="h-16 px-space-xs flex items-center justify-around max-w-screen-md mx-auto"><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] gap-0.5 text-secondary hover:text-on-surface transition-colors" data-path="home" href="home.html"><span class="material-symbols-outlined text-[24px]">home</span><span class="font-label-sm text-label-sm">Home</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] gap-0.5 transition-colors text-primary font-label-md" data-path="global-data-explorer" href="explore.html"><span class="material-symbols-outlined text-[24px]">explore</span><span class="font-label-sm text-label-sm">Explore</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] group -mt-4" data-path="guided-field-test-collection" href="collect.html"><div class="w-12 h-12 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-[0_4px_12px_rgba(200,16,46,0.35)] active:scale-95 transition-all"><span class="material-symbols-outlined text-[24px]">cell_tower</span></div><span class="font-label-sm text-label-sm text-primary font-semibold mt-1">Collect</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] gap-0.5 text-secondary hover:text-on-surface transition-colors" data-path="community" href="community.html"><span class="material-symbols-outlined text-[24px]">groups</span><span class="font-label-sm text-label-sm">Community</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] gap-0.5 text-secondary hover:text-on-surface transition-colors" data-path="profile" href="profile.html"><span class="material-symbols-outlined text-[24px]">account_circle</span><span class="font-label-sm text-label-sm">Profile</span></a></div></nav><script src="prototype-nav.js"></script></body></html>
