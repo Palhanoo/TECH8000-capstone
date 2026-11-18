@@ -2,25 +2,20 @@
 // would be against a real API. Data lives in localStorage; swap this file for fetch()
 // calls to a real server and the views don't need to change.
 
-const DB_KEY = "gdds-signal-db-v3";
-const SESSION_KEY = "gdds-signal-session-v3";
+import { COUNTRIES, PLACES, PLACE_BY_ID, CONSENT_VERSION, hashStr, uid } from "../../../shared/dataset.js";
+import { loadDb, saveDb, resetDb, onDbChange } from "../../../shared/store.js";
+
+const SESSION_KEY = "gdds-signal-session-v4";
 const MONASH_EMAIL = /^[^\s@]+@(student\.)?monash\.edu$/i;
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(message, code) { super(message); this.code = code; }
 }
 
+// The data is shared with the other Signal Club apps on this site (see shared/store.js).
 let db = loadDb();
-function loadDb() {
-  try {
-    const d = JSON.parse(localStorage.getItem(DB_KEY));
-    if (d && d.version === DB_VERSION) return d;
-  } catch { /* fall through to a fresh seed */ }
-  const fresh = seedDb();
-  localStorage.setItem(DB_KEY, JSON.stringify(fresh));
-  return fresh;
-}
-const persist = () => localStorage.setItem(DB_KEY, JSON.stringify(db));
+onDbChange((fresh) => { db = fresh; });
+const persist = () => saveDb(db);
 const wait = (ms = 120 + Math.random() * 220) => new Promise((r) => setTimeout(r, ms));
 
 // Demo-grade password hashing. A real server would use bcrypt/argon2 and Monash SSO.
@@ -37,7 +32,7 @@ async function passwordMatches(user, password) {
   return user.passHash === (await hashPassword(user.email, password));
 }
 
-const pseudonym = (id) => "Contributor " + (hashStr(id) % 65536).toString(16).toUpperCase().padStart(4, "0");
+export const pseudonym = (id) => "Contributor " + (hashStr(id) % 65536).toString(16).toUpperCase().padStart(4, "0");
 const userById = (id) => db.users.find((u) => u.id === id);
 function publicUser(u) {
   if (!u) return { id: null, display: "Deleted account", initial: "?", place: null };
@@ -79,7 +74,7 @@ function decoratePost(p, me) {
 }
 function postRegion(p) { return COUNTRIES[PLACES.find((x) => x.city === p.readings[0].city)?.cc]?.region; }
 
-const api = {
+export const api = {
   /* ---------- auth ---------- */
   session: currentUser,
   isAdmin: () => isAdmin(currentUser()),
@@ -309,5 +304,5 @@ const api = {
     return (db.audit || []).map((a) => ({ ...a, admin: userById(a.adminId)?.name || "Former admin" }));
   },
 
-  resetDemo() { localStorage.removeItem(DB_KEY); localStorage.removeItem(SESSION_KEY); db = loadDb(); },
+  resetDemo() { localStorage.removeItem(SESSION_KEY); db = resetDb(); },
 };

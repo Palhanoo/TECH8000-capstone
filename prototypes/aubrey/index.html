@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Signal Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{bg:'var(--bg)',card:'var(--card)',ink:'var(--text)',mute:'var(--muted)',line:'var(--line)',navy:'#001427',sage:'#708d81',sand:'#f4d58d',alert:'#bf0603',maroon:'#8d0801'},fontFamily:{sans:['"Bricolage Grotesque"','system-ui','-apple-system','Segoe UI','sans-serif']}}}}
+</script>
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body class="font-sans antialiased">
+
+<!-- Login -->
+<section id="login" class="hidden min-h-screen items-center justify-center p-5">
+  <div class="w-full max-w-sm">
+    <div class="flex items-end gap-1 h-10 mb-4" aria-hidden="true">
+      <span class="bar" style="height:30%;background:#8d0801"></span><span class="bar" style="height:55%;background:#f4d58d"></span><span class="bar" style="height:78%;background:#708d81"></span><span class="bar" style="height:100%;background:#708d81"></span>
+    </div>
+    <h1 class="text-4xl font-extrabold tracking-tight">Signal Club</h1>
+    <p class="text-mute mt-2">Report your network signal. Look out for each other when coverage drops.</p>
+    <p id="notice" class="hidden mt-4 text-sm rounded-xl p-3 bg-sand text-navy"></p>
+    <form id="loginForm" class="mt-6 space-y-3">
+      <label class="block text-sm font-semibold">Email<input id="email" type="email" required autocomplete="email" class="in mt-1" placeholder="you@example.com"></label>
+      <label class="block text-sm font-semibold">Password<input id="pass" type="password" required minlength="4" autocomplete="current-password" class="in mt-1" placeholder="At least 4 characters"></label>
+      <button class="btn w-full bg-sand text-navy">Log in</button>
+    </form>
+    <p class="text-xs text-mute mt-4">Demo only. Any email and password will work. Everything is cached in this browser and deleted after 30 minutes of inactivity.</p>
+  </div>
+</section>
+
+<!-- App -->
+<div id="app" class="hidden pb-24">
+  <header class="sticky z-40 bg-bg border-b border-line" style="top:env(safe-area-inset-top,0px)">
+    <div class="max-w-3xl mx-auto flex items-center justify-between px-4 py-3">
+      <div class="flex items-end gap-0.5 h-5" aria-hidden="true"><span class="bar" style="height:30%;background:#bf0603"></span><span class="bar" style="height:55%;background:#f4d58d"></span><span class="bar" style="height:78%;background:#708d81"></span><span class="bar" style="height:100%;background:#708d81"></span></div>
+      <span class="font-extrabold text-lg mr-auto ml-2">Signal Club</span>
+      <span id="timer" class="chip bg-sage text-navy mr-2" title="Time left before cached data is deleted">30:00</span>
+      <button id="logout" class="text-sm font-semibold underline underline-offset-4">Log out</button>
+    </div>
+  </header>
+  <main id="main" class="max-w-3xl mx-auto px-4 pt-5"></main>
+  <nav class="fixed bottom-0 inset-x-0 z-40 bg-card border-t border-line" style="padding-bottom:env(safe-area-inset-bottom,0px)">
+    <div class="max-w-3xl mx-auto grid grid-cols-3 text-sm font-semibold">
+      <a href="#dashboard" data-nav="dashboard" class="py-3 text-center">Dashboard</a>
+      <a href="#report" data-nav="report" class="py-3 text-center">Report</a>
+      <a href="#stats" data-nav="stats" class="py-3 text-center">Statistics</a>
+    </div>
+  </nav>
+</div>
+<div id="toast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-24 z-50 bg-navy text-sand text-sm font-semibold rounded-xl px-4 py-2 shadow"></div>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,10 +1,18 @@
-import demo from './demo.json';
+import { landPath } from './land-path.js';
 import './style.css';
+import { loadDb, onDbChange, students as studentsOf, readings as readingsOf, addManualReading } from '../../shared/store.js';
 
-const { students } = demo;
-const people = new Map(students.map(student => [student.id, student]));
-const countries = [...new Set(students.map(student => student.country))].sort();
+// Students and readings come from the data shared with the other Signal Club apps on this site.
+let db = loadDb();
+let students, people, countries;
+function loadStudents() {
+  students = studentsOf(db);
+  people = new Map(students.map(student => [student.id, student]));
+  countries = [...new Set(students.map(student => student.country))].sort();
+}
+loadStudents();
 const technologies = ['LTE', 'NR-NSA', 'NR-SA', '3G'];
+const techLabels = { LTE: '4G LTE', 'NR-NSA': '5G NSA', 'NR-SA': '5G SA', '3G': '3G' };
 const metrics = [
   ['rsrp', 'RSRP', 'dBm', -160, -30], ['rsrq', 'RSRQ', 'dB', -50, 30],
   ['sinr', 'SINR', 'dB', -40, 60], ['ssRsrp', 'SS-RSRP', 'dBm', -160, -30],
@@ -25,7 +33,7 @@ const icons = {
 };
 const icon = name => `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${icons[name]}</svg>`;
 const options = values => values.map(value => `<option>${value}</option>`).join('');
-const studentsOptions = students.map(({id, name, country}) => `<option value="${id}">${name} · ${country}</option>`).join('');
+const studentsOptions = () => students.map(({id, name, country}) => `<option value="${id}">${escape(name)} · ${country}</option>`).join('');
 const $ = selector => document.querySelector(selector);
 const date = new Intl.DateTimeFormat('en', { dateStyle: 'medium' });
 const format = (value, unit = '') => value == null ? '—' : `${value}${unit ? ' ' + unit : ''}`;
@@ -39,6 +47,7 @@ $('#app').innerHTML = `
     <a class="brand" href="#overview"><span class="brand-mark">${icon('signal')}</span><span>Signal Club<small>NETWORK RESEARCH</small></span></a>
     <nav aria-label="Workspace">
       <a href="#overview">${icon('grid')} Overview</a>
+      <a href="#map">${icon('globe')} World map</a>
       <a href="#readings">${icon('data')} Field readings</a>
       <a href="#community">${icon('users')} Community</a>
       <a href="#examples">${icon('flask')} Examples</a>
@@ -53,6 +62,19 @@ $('#app').innerHTML = `
         <button class="primary" id="open-reading">${icon('plus')} Add reading</button>
       </section>
       <section id="stats" class="stats" aria-label="Dataset summary"></section>
+      <section class="panel world" id="map" aria-labelledby="map-title">
+        <div class="section-heading"><div><h2 id="map-title">World map</h2><p>Select a point to see each student at that location.</p></div></div>
+        <figure class="map-frame">
+          <div class="map-stage">
+            <svg class="world-svg" viewBox="0 0 1000 500" aria-hidden="true">
+              <rect class="ocean" width="1000" height="500"></rect>
+              <path class="land" d="${landPath}"></path>
+            </svg>
+            <div id="markers"></div>
+          </div>
+          <figcaption>City coordinates from the demo dataset. Students within 80 km share a point.</figcaption>
+        </figure>
+      </section>
       <div class="workspace">
         <div class="research">
           <div class="charts">
@@ -78,13 +100,17 @@ $('#app').innerHTML = `
           </section>
         </div>
         <section class="panel community" id="community">
-          <div class="section-heading"><div><h2>Community</h2><p>Connect with your cohort</p></div><span class="badge">25 students</span></div>
+          <div class="section-heading"><div><h2>Community</h2><p>Connect with your cohort</p></div><span class="badge" id="student-count"></span></div>
           <label class="search">Find a student<input id="search" type="search" placeholder="Search name or country"></label>
           <div id="directory"></div>
         </section>
       </div>
     </div>
   </main>
+  <dialog id="profile" aria-labelledby="profile-title" closedby="any">
+    <div class="dialog-heading"><div><h2 id="profile-title"></h2><p id="profile-place"></p></div><button class="close" data-close="profile" aria-label="Close profile" autofocus>${icon('close')}</button></div>
+    <ul id="profile-list"></ul>
+  </dialog>
   <dialog id="chat" aria-labelledby="chat-title">
     <div class="dialog-heading"><div><h2 id="chat-title"></h2><p id="chat-subtitle"></p></div><button class="close" data-close="chat" aria-label="Close chat">${icon('close')}</button></div>
     <div id="messages" role="log" aria-label="Messages"></div>
@@ -94,7 +120,7 @@ $('#app').innerHTML = `
     <div class="dialog-heading"><div><h2 id="capture-title">Add a field reading</h2><p>Copy the values from your phone’s Field Test Mode.</p></div><button class="close" data-close="capture" aria-label="Close reading form">${icon('close')}</button></div>
     <form id="capture-form">
       <div class="form-grid">
-        <label>Student<select name="studentId" required><option value="">Select student</option>${studentsOptions}</select></label>
+        <label>Student<select name="studentId" required><option value="">Select student</option>${studentsOptions()}</select></label>
         <label>Carrier<input name="carrier" required maxlength="60" placeholder="e.g. Telstra"></label>
         <label>Technology<select name="tech">${options(technologies)}</select></label>
         <label>Environment<select name="environment">${options(['outdoor', 'indoor'])}</select></label>
@@ -104,14 +130,14 @@ $('#app').innerHTML = `
       </div>
       <p class="data-note">Enter at least one signal metric.</p>
       <p id="capture-status" role="status"></p>
-      <button class="primary" type="submit">Save to server</button>
+      <button class="primary" type="submit">Save reading</button>
     </form>
   </dialog>
 `;
 
-let saved = [];
 let filtered = [];
 let activeStudent;
+let mapClusters = [];
 let conversations = {};
 try { conversations = JSON.parse(localStorage.getItem('signal-club-chat') || '{}') ?? {}; } catch { /* use session state */ }
 
@@ -137,7 +163,7 @@ function renderChart(readings) {
 }
 
 function render() {
-  const readings = [...demo.readings, ...saved].sort((a, b) => b.takenAt.localeCompare(a.takenAt));
+  const readings = readingsOf(db).filter(r => people.has(r.contributor)).map(r => ({ ...r, studentId: r.contributor }));
   const stats = [
     ['users', students.length, 'Students'],
     ['globe', countries.length, 'Countries & regions'],
@@ -152,7 +178,7 @@ function render() {
   $('#export').disabled = filtered.length === 0;
   $('#rows').innerHTML = filtered.map(r => {
     const student = people.get(r.studentId);
-    return `<tr><th scope="row">${student.name}<small>${student.device} · ${student.country}</small></th>
+    return `<tr><th scope="row">${escape(student.name)}<small>${student.device} · ${student.country}</small></th>
       <td>${escape(r.carrier)}</td><td><span class="badge">${r.tech}</span></td><td>${escape(format(r.band))}</td>
       <td>${format(r.altitude, 'm')}</td>${metrics.map(([key, , unit]) => `<td>${format(r[key], unit)}</td>`).join('')}
       <td>${r.environment}</td><td>${r.source}</td><td>${date.format(new Date(r.takenAt))}</td></tr>`;
@@ -160,12 +186,91 @@ function render() {
   renderChart(filtered);
 }
 
+function kmBetween(a, b) {
+  const toRad = degrees => degrees * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+function clusterStudents(list) {
+  const clusters = [];
+  for (const student of list) {
+    const match = clusters.find(cluster => cluster.members.some(member => kmBetween(member, student) <= 80));
+    if (match) {
+      match.members.push(student);
+      match.lat = match.members.reduce((sum, member) => sum + member.lat, 0) / match.members.length;
+      match.lng = match.members.reduce((sum, member) => sum + member.lng, 0) / match.members.length;
+    } else clusters.push({ lat: student.lat, lng: student.lng, members: [student] });
+  }
+  return clusters;
+}
+
+function signalSummary(reading) {
+  if (!reading) return 'No readings yet';
+  const metric = reading.rsrp != null ? `${reading.rsrp} dBm RSRP`
+    : reading.ssRsrp != null ? `${reading.ssRsrp} dBm SS-RSRP`
+    : reading.rssi != null ? `${reading.rssi} dBm RSSI` : 'no signal metric';
+  return `${techLabels[reading.tech] || reading.tech} · ${reading.carrier} · ${metric} · ${date.format(new Date(reading.takenAt))}`;
+}
+
+function renderMap() {
+  mapClusters = clusterStudents(students);
+  $('#markers').innerHTML = mapClusters.map((cluster, index) => {
+    const x = (cluster.lng + 180) / 360 * 100;
+    const y = (90 - cluster.lat) / 180 * 100;
+    const count = cluster.members.length;
+    const label = count === 1
+      ? `${cluster.members[0].name}, ${cluster.members[0].city}, ${cluster.members[0].country}`
+      : `${count} students: ${cluster.members.map(student => student.name).join(', ')}`;
+    return `<button class="pin" type="button" data-cluster="${index}" style="--x:${x}%;--y:${y}%">
+      <span class="pin-dot" aria-hidden="true">${count > 1 ? count : ''}</span>
+      <span class="visually-hidden">${escape(label)}</span>
+    </button>`;
+  }).join('');
+}
+
+function renderProfile(members) {
+  $('#profile-title').textContent = members.length === 1 ? members[0].name : `${members.length} students`;
+  $('#profile-place').textContent = [...new Set(members.map(student => `${student.city}, ${student.country}`))].join(' · ');
+  const readings = readingsOf(db).filter(reading => people.has(reading.contributor)).map(reading => ({ ...reading, studentId: reading.contributor }));
+  $('#profile-list').innerHTML = members.map(student => {
+    const own = readings.filter(reading => reading.studentId === student.id)
+      .sort((a, b) => b.takenAt.localeCompare(a.takenAt));
+    return `<li>
+      <div class="profile-person">
+        <span class="avatar" style="--tone:${students.indexOf(student) % 4}">${student.name.split(' ').map(word => word[0]).slice(0, 2).join('')}</span>
+        <div><strong>${escape(student.name)}</strong><small>${flag(student.code)} ${escape(student.city)}, ${escape(student.country)}</small></div>
+        <button class="message" type="button" data-person="${student.id}">${icon('chat')}<span class="visually-hidden">Message ${escape(student.name)}</span></button>
+      </div>
+      <dl>
+        <div><dt>Device</dt><dd>${escape(student.device)}</dd></div>
+        <div><dt>Readings</dt><dd>${own.length}</dd></div>
+        <div><dt>Latest signal</dt><dd>${escape(signalSummary(own[0]))}</dd></div>
+      </dl>
+    </li>`;
+  }).join('');
+}
+
+function openChat(student) {
+  activeStudent = student;
+  $('#chat-title').textContent = student.name;
+  $('#chat-subtitle').textContent = student.country + ' · Demo chat';
+  $('#compose').reset();
+  $('#chat').showModal();
+  renderMessages();
+}
+
 function renderDirectory() {
   const query = $('#search').value.trim().toLowerCase();
+  $('#student-count').textContent = `${students.length} students`;
   const matches = students.filter(s => `${s.name} ${s.city} ${s.country}`.toLowerCase().includes(query));
   $('#directory').innerHTML = matches.map((s, i) => `<button class="person" type="button" data-person="${s.id}" style="--tone:${i % 4}">
     <span class="avatar">${s.name.split(' ').map(word => word[0]).slice(0, 2).join('')}</span>
-    <span class="person-info"><strong>${s.name}</strong><small>${flag(s.code)} ${s.country} · ${s.city}</small></span>
+    <span class="person-info"><strong>${escape(s.name)}</strong><small>${flag(s.code)} ${s.country} · ${s.city}</small></span>
     ${icon('chat')}</button>`).join('') || '<p class="empty">No students found.</p>';
 }
 
@@ -193,12 +298,20 @@ function renderMessages() {
 $('#directory').addEventListener('click', event => {
   const button = event.target.closest('[data-person]');
   if (!button) return;
-  activeStudent = people.get(button.dataset.person);
-  $('#chat-title').textContent = activeStudent.name;
-  $('#chat-subtitle').textContent = activeStudent.country + ' · Demo chat';
-  $('#compose').reset();
-  $('#chat').showModal();
-  renderMessages();
+  openChat(people.get(button.dataset.person));
+});
+$('#markers').addEventListener('click', event => {
+  const button = event.target.closest('[data-cluster]');
+  if (!button) return;
+  renderProfile(mapClusters[button.dataset.cluster].members);
+  $('#profile').showModal();
+});
+$('#profile-list').addEventListener('click', event => {
+  const button = event.target.closest('[data-person]');
+  if (!button) return;
+  const student = people.get(button.dataset.person);
+  $('#profile').close();
+  openChat(student);
 });
 $('#compose').addEventListener('submit', event => {
   event.preventDefault();
@@ -215,6 +328,17 @@ $('#country').addEventListener('change', render);
 $('#technology').addEventListener('change', render);
 $('#open-reading').addEventListener('click', () => { $('#capture-status').textContent = ''; $('#capture').showModal(); });
 document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => $('#' + button.dataset.close).close()));
+if (!('closedBy' in HTMLDialogElement.prototype)) {
+  const outside = (event, dialog) => {
+    const rect = dialog.getBoundingClientRect();
+    return event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
+  };
+  for (const dialog of document.querySelectorAll('dialog[closedby="any"]')) {
+    let pressedOutside = false;
+    dialog.addEventListener('pointerdown', event => { pressedOutside = outside(event, dialog); });
+    dialog.addEventListener('pointerup', event => { if (pressedOutside && outside(event, dialog)) dialog.close(); });
+  }
+}
 
 $('#export').addEventListener('click', () => {
   const columns = ['studentId', 'country', 'city', 'device', 'carrier', 'tech', 'band', 'altitude', ...metrics.map(([key]) => key), 'environment', 'source', 'takenAt'];
@@ -236,40 +360,24 @@ $('#export').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
-async function requestReadings(options) {
-  const response = await fetch('/api/readings', options);
-  if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('Reading server unavailable.');
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error);
-  return result;
-}
-
-$('#capture-form').addEventListener('submit', async event => {
+$('#capture-form').addEventListener('submit', event => {
   event.preventDefault();
   const form = event.target;
   const input = Object.fromEntries(new FormData(form));
   for (const key of ['altitude', ...metrics.map(([key]) => key)]) {
     input[key] = input[key] === '' ? null : Number(input[key]);
   }
-  const button = form.querySelector('[type="submit"]');
-  button.disabled = true;
-  $('#capture-status').textContent = 'Saving…';
   try {
-    const reading = await requestReadings({
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
-    });
-    saved.push(reading);
+    addManualReading(db, input.studentId, input);
     $('#country').value = '';
     $('#technology').value = '';
     render();
     form.reset();
     $('#capture').close();
-    $('#api-status').textContent = 'Reading saved to the server.';
+    $('#api-status').textContent = 'Reading saved. It also appears in the Signal Club app feed.';
     $('#readings').scrollIntoView({ block: 'start' });
   } catch (error) {
     $('#capture-status').textContent = error.message;
-  } finally {
-    button.disabled = false;
   }
 });
 
@@ -282,9 +390,20 @@ function updateNavigation() {
 }
 window.addEventListener('hashchange', updateNavigation);
 updateNavigation();
-renderDirectory();
-render();
-requestReadings().then(records => {
-  saved = [...new Map([...records, ...saved].map(record => [record.id, record])).values()];
+// The Signal Club app changed the shared data (new reading, new student, deleted post).
+onDbChange(fresh => {
+  db = fresh;
+  loadStudents();
+  const country = $('#country').value;
+  $('#country').innerHTML = `<option value="">All countries</option>${options(countries)}`;
+  $('#country').value = countries.includes(country) ? country : '';
+  $('#capture-form').elements.studentId.innerHTML = `<option value="">Select student</option>${studentsOptions()}`;
+  renderDirectory();
+  renderMap();
   render();
-}).catch(() => { $('#api-status').textContent = 'Saved readings are unavailable. Showing demo readings.'; });
+});
+
+renderDirectory();
+renderMap();
+render();
+$('#api-status').textContent = 'Shared with the Signal Club app on this site. Readings are saved in this browser.';
