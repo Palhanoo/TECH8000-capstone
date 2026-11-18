@@ -1,3 +1,4 @@
+import { landPath } from './land-path.js';
 import './style.css';
 import { loadDb, onDbChange, students as studentsOf, readings as readingsOf, addManualReading } from '../../shared/store.js';
 
@@ -11,6 +12,7 @@ function loadStudents() {
 }
 loadStudents();
 const technologies = ['LTE', 'NR-NSA', 'NR-SA', '3G'];
+const techLabels = { LTE: '4G LTE', 'NR-NSA': '5G NSA', 'NR-SA': '5G SA', '3G': '3G' };
 const metrics = [
   ['rsrp', 'RSRP', 'dBm', -160, -30], ['rsrq', 'RSRQ', 'dB', -50, 30],
   ['sinr', 'SINR', 'dB', -40, 60], ['ssRsrp', 'SS-RSRP', 'dBm', -160, -30],
@@ -45,6 +47,7 @@ $('#app').innerHTML = `
     <a class="brand" href="#overview"><span class="brand-mark">${icon('signal')}</span><span>Signal Club<small>NETWORK RESEARCH</small></span></a>
     <nav aria-label="Workspace">
       <a href="#overview">${icon('grid')} Overview</a>
+      <a href="#map">${icon('globe')} World map</a>
       <a href="#readings">${icon('data')} Field readings</a>
       <a href="#community">${icon('users')} Community</a>
       <a href="#examples">${icon('flask')} Examples</a>
@@ -59,6 +62,19 @@ $('#app').innerHTML = `
         <button class="primary" id="open-reading">${icon('plus')} Add reading</button>
       </section>
       <section id="stats" class="stats" aria-label="Dataset summary"></section>
+      <section class="panel world" id="map" aria-labelledby="map-title">
+        <div class="section-heading"><div><h2 id="map-title">World map</h2><p>Select a point to see each student at that location.</p></div></div>
+        <figure class="map-frame">
+          <div class="map-stage">
+            <svg class="world-svg" viewBox="0 0 1000 500" aria-hidden="true">
+              <rect class="ocean" width="1000" height="500"></rect>
+              <path class="land" d="${landPath}"></path>
+            </svg>
+            <div id="markers"></div>
+          </div>
+          <figcaption>City coordinates from the demo dataset. Students within 80 km share a point.</figcaption>
+        </figure>
+      </section>
       <div class="workspace">
         <div class="research">
           <div class="charts">
@@ -91,6 +107,10 @@ $('#app').innerHTML = `
       </div>
     </div>
   </main>
+  <dialog id="profile" aria-labelledby="profile-title" closedby="any">
+    <div class="dialog-heading"><div><h2 id="profile-title"></h2><p id="profile-place"></p></div><button class="close" data-close="profile" aria-label="Close profile" autofocus>${icon('close')}</button></div>
+    <ul id="profile-list"></ul>
+  </dialog>
   <dialog id="chat" aria-labelledby="chat-title">
     <div class="dialog-heading"><div><h2 id="chat-title"></h2><p id="chat-subtitle"></p></div><button class="close" data-close="chat" aria-label="Close chat">${icon('close')}</button></div>
     <div id="messages" role="log" aria-label="Messages"></div>
@@ -117,6 +137,7 @@ $('#app').innerHTML = `
 
 let filtered = [];
 let activeStudent;
+let mapClusters = [];
 let conversations = {};
 try { conversations = JSON.parse(localStorage.getItem('signal-club-chat') || '{}') ?? {}; } catch { /* use session state */ }
 
@@ -165,6 +186,84 @@ function render() {
   renderChart(filtered);
 }
 
+function kmBetween(a, b) {
+  const toRad = degrees => degrees * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+function clusterStudents(list) {
+  const clusters = [];
+  for (const student of list) {
+    const match = clusters.find(cluster => cluster.members.some(member => kmBetween(member, student) <= 80));
+    if (match) {
+      match.members.push(student);
+      match.lat = match.members.reduce((sum, member) => sum + member.lat, 0) / match.members.length;
+      match.lng = match.members.reduce((sum, member) => sum + member.lng, 0) / match.members.length;
+    } else clusters.push({ lat: student.lat, lng: student.lng, members: [student] });
+  }
+  return clusters;
+}
+
+function signalSummary(reading) {
+  if (!reading) return 'No readings yet';
+  const metric = reading.rsrp != null ? `${reading.rsrp} dBm RSRP`
+    : reading.ssRsrp != null ? `${reading.ssRsrp} dBm SS-RSRP`
+    : reading.rssi != null ? `${reading.rssi} dBm RSSI` : 'no signal metric';
+  return `${techLabels[reading.tech] || reading.tech} · ${reading.carrier} · ${metric} · ${date.format(new Date(reading.takenAt))}`;
+}
+
+function renderMap() {
+  mapClusters = clusterStudents(students);
+  $('#markers').innerHTML = mapClusters.map((cluster, index) => {
+    const x = (cluster.lng + 180) / 360 * 100;
+    const y = (90 - cluster.lat) / 180 * 100;
+    const count = cluster.members.length;
+    const label = count === 1
+      ? `${cluster.members[0].name}, ${cluster.members[0].city}, ${cluster.members[0].country}`
+      : `${count} students: ${cluster.members.map(student => student.name).join(', ')}`;
+    return `<button class="pin" type="button" data-cluster="${index}" style="--x:${x}%;--y:${y}%">
+      <span class="pin-dot" aria-hidden="true">${count > 1 ? count : ''}</span>
+      <span class="visually-hidden">${escape(label)}</span>
+    </button>`;
+  }).join('');
+}
+
+function renderProfile(members) {
+  $('#profile-title').textContent = members.length === 1 ? members[0].name : `${members.length} students`;
+  $('#profile-place').textContent = [...new Set(members.map(student => `${student.city}, ${student.country}`))].join(' · ');
+  const readings = readingsOf(db).filter(reading => people.has(reading.contributor)).map(reading => ({ ...reading, studentId: reading.contributor }));
+  $('#profile-list').innerHTML = members.map(student => {
+    const own = readings.filter(reading => reading.studentId === student.id)
+      .sort((a, b) => b.takenAt.localeCompare(a.takenAt));
+    return `<li>
+      <div class="profile-person">
+        <span class="avatar" style="--tone:${students.indexOf(student) % 4}">${student.name.split(' ').map(word => word[0]).slice(0, 2).join('')}</span>
+        <div><strong>${escape(student.name)}</strong><small>${flag(student.code)} ${escape(student.city)}, ${escape(student.country)}</small></div>
+        <button class="message" type="button" data-person="${student.id}">${icon('chat')}<span class="visually-hidden">Message ${escape(student.name)}</span></button>
+      </div>
+      <dl>
+        <div><dt>Device</dt><dd>${escape(student.device)}</dd></div>
+        <div><dt>Readings</dt><dd>${own.length}</dd></div>
+        <div><dt>Latest signal</dt><dd>${escape(signalSummary(own[0]))}</dd></div>
+      </dl>
+    </li>`;
+  }).join('');
+}
+
+function openChat(student) {
+  activeStudent = student;
+  $('#chat-title').textContent = student.name;
+  $('#chat-subtitle').textContent = student.country + ' · Demo chat';
+  $('#compose').reset();
+  $('#chat').showModal();
+  renderMessages();
+}
+
 function renderDirectory() {
   const query = $('#search').value.trim().toLowerCase();
   $('#student-count').textContent = `${students.length} students`;
@@ -199,12 +298,20 @@ function renderMessages() {
 $('#directory').addEventListener('click', event => {
   const button = event.target.closest('[data-person]');
   if (!button) return;
-  activeStudent = people.get(button.dataset.person);
-  $('#chat-title').textContent = activeStudent.name;
-  $('#chat-subtitle').textContent = activeStudent.country + ' · Demo chat';
-  $('#compose').reset();
-  $('#chat').showModal();
-  renderMessages();
+  openChat(people.get(button.dataset.person));
+});
+$('#markers').addEventListener('click', event => {
+  const button = event.target.closest('[data-cluster]');
+  if (!button) return;
+  renderProfile(mapClusters[button.dataset.cluster].members);
+  $('#profile').showModal();
+});
+$('#profile-list').addEventListener('click', event => {
+  const button = event.target.closest('[data-person]');
+  if (!button) return;
+  const student = people.get(button.dataset.person);
+  $('#profile').close();
+  openChat(student);
 });
 $('#compose').addEventListener('submit', event => {
   event.preventDefault();
@@ -221,6 +328,17 @@ $('#country').addEventListener('change', render);
 $('#technology').addEventListener('change', render);
 $('#open-reading').addEventListener('click', () => { $('#capture-status').textContent = ''; $('#capture').showModal(); });
 document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => $('#' + button.dataset.close).close()));
+if (!('closedBy' in HTMLDialogElement.prototype)) {
+  const outside = (event, dialog) => {
+    const rect = dialog.getBoundingClientRect();
+    return event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
+  };
+  for (const dialog of document.querySelectorAll('dialog[closedby="any"]')) {
+    let pressedOutside = false;
+    dialog.addEventListener('pointerdown', event => { pressedOutside = outside(event, dialog); });
+    dialog.addEventListener('pointerup', event => { if (pressedOutside && outside(event, dialog)) dialog.close(); });
+  }
+}
 
 $('#export').addEventListener('click', () => {
   const columns = ['studentId', 'country', 'city', 'device', 'carrier', 'tech', 'band', 'altitude', ...metrics.map(([key]) => key), 'environment', 'source', 'takenAt'];
@@ -281,9 +399,11 @@ onDbChange(fresh => {
   $('#country').value = countries.includes(country) ? country : '';
   $('#capture-form').elements.studentId.innerHTML = `<option value="">Select student</option>${studentsOptions()}`;
   renderDirectory();
+  renderMap();
   render();
 });
 
 renderDirectory();
+renderMap();
 render();
 $('#api-status').textContent = 'Shared with the Signal Club app on this site. Readings are saved in this browser.';

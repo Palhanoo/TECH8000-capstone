@@ -27,7 +27,7 @@ export function onDbChange(callback) {
 export function students(db) {
   return db.users.filter((u) => u.role !== "admin").map((u) => {
     const place = PLACE_BY_ID[u.placeId];
-    return { id: u.id, name: u.name, city: place.city, country: COUNTRIES[place.cc].name, code: place.cc, device: u.device, campus: place.campus };
+    return { id: u.id, name: u.name, city: place.city, country: COUNTRIES[place.cc].name, code: place.cc, device: u.device, campus: place.campus, lat: place.lat, lng: place.lon };
   });
 }
 
