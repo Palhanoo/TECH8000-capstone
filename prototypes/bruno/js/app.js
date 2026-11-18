@@ -1,11 +1,21 @@
 /* =========================================================================
    Signal Club: views and routing. Hash routes, e.g. #/feed, #/post/<id>.
    ========================================================================= */
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import "../css/app.css";
+import { FIELDS, FIELD_GROUPS, FIELD_BY_KEY, MISSING } from "../../../shared/fields.js";
+import {
+  REGIONS, COUNTRIES, PLACES, PLACE_BY_ID, DEVICES, DEVICE_BY_MODEL, APP_VERSION, CONSENT_VERSION,
+  hashStr, uid, headline, quality, simulateReading,
+} from "../../../shared/dataset.js";
+import { onDbChange } from "../../../shared/store.js";
+import { api, pseudonym } from "./api.js";
 
 const $ = (sel, el = document) => el.querySelector(sel);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const view = $("#view");
-const hasLeaflet = () => typeof L !== "undefined";
+const hasLeaflet = () => Boolean(L?.map);
 const AV_COLOURS = ["#2f9e6e", "#3f6fd8", "#c8553d", "#8a5cc4", "#c99312", "#1f8a9e", "#b04a7a", "#5a7a2e"];
 const colourFor = (s) => AV_COLOURS[hashStr(s || "?") % AV_COLOURS.length];
 const CC_BY_NAME = Object.fromEntries(Object.entries(COUNTRIES).map(([cc, c]) => [c.name, cc]));
@@ -999,4 +1009,6 @@ async function adminAudit(box, seq) {
 const ROUTES = { login: viewLogin, register: viewRegister, verify: viewVerify, feed: viewFeed, post: viewPost, map: viewMap,
   record: viewRecord, insights: viewInsights, data: viewData, me: viewMe, admin: viewAdmin };
 window.addEventListener("hashchange", router);
+// Another app on the site changed the shared data: refresh read-only pages.
+onDbChange(() => { if (/^#\/(feed|map|insights|admin)/.test(location.hash)) router(); });
 router();

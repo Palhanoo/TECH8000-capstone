@@ -1,8 +1,8 @@
 // Every field a reading can carry. This one list drives the reading detail view,
 // the CSV export, the field coverage chart and the data dictionary.
-const FIELD_GROUPS = ["Context", "Location", "Network", "Signal (4G LTE)", "Signal (5G NR)", "Performance", "Device", "Record"];
+export const FIELD_GROUPS = ["Context", "Location", "Network", "Signal (4G LTE)", "Signal (5G NR)", "Performance", "Device", "Record"];
 
-const FIELDS = [
+export const FIELDS = [
   // Context
   { key: "takenAt", group: "Context", label: "Timestamp", unit: "ISO 8601, UTC", desc: "When the reading was taken.", source: "System.currentTimeMillis()", privacy: "public" },
   { key: "tz", group: "Context", label: "Timezone", unit: "IANA name", desc: "Device timezone, so readings can be compared by local time of day.", source: "TimeZone.getDefault()", privacy: "public" },
@@ -64,13 +64,14 @@ const FIELDS = [
   { key: "readingId", group: "Record", label: "Reading ID", desc: "Unique ID for this reading.", source: "Server", privacy: "public" },
   { key: "sessionId", group: "Record", label: "Walk session", desc: "Shared by every reading taken in one walk.", source: "App", privacy: "public" },
   { key: "contributor", group: "Record", label: "Contributor", desc: "Pseudonymous ID. Never the student's name or email.", source: "Server", privacy: "public" },
+  { key: "source", group: "Record", label: "Capture method", desc: "App: read automatically by the Android app (simulated in this prototype). Manual: typed in from the phone's Field Test Mode.", source: "App", privacy: "public" },
   { key: "consentVersion", group: "Record", label: "Consent version", desc: "Which version of the consent terms the student agreed to.", source: "Server", privacy: "public" },
 ];
 
-const FIELD_BY_KEY = Object.fromEntries(FIELDS.map((f) => [f.key, f]));
+export const FIELD_BY_KEY = Object.fromEntries(FIELDS.map((f) => [f.key, f]));
 
 // Why a value is missing. Telling these apart is part of cleaning the data.
-const MISSING = {
+export const MISSING = {
   unsupported: "Not reported by this phone",
   not_applicable: "Not applicable",
   not_entered: "Not entered by the student",

@@ -1,9 +1,15 @@
-import demo from './demo.json';
 import './style.css';
+import { loadDb, onDbChange, students as studentsOf, readings as readingsOf, addManualReading } from '../../shared/store.js';
 
-const { students } = demo;
-const people = new Map(students.map(student => [student.id, student]));
-const countries = [...new Set(students.map(student => student.country))].sort();
+// Students and readings come from the data shared with the other Signal Club apps on this site.
+let db = loadDb();
+let students, people, countries;
+function loadStudents() {
+  students = studentsOf(db);
+  people = new Map(students.map(student => [student.id, student]));
+  countries = [...new Set(students.map(student => student.country))].sort();
+}
+loadStudents();
 const technologies = ['LTE', 'NR-NSA', 'NR-SA', '3G'];
 const metrics = [
   ['rsrp', 'RSRP', 'dBm', -160, -30], ['rsrq', 'RSRQ', 'dB', -50, 30],
@@ -25,7 +31,7 @@ const icons = {
 };
 const icon = name => `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${icons[name]}</svg>`;
 const options = values => values.map(value => `<option>${value}</option>`).join('');
-const studentsOptions = students.map(({id, name, country}) => `<option value="${id}">${name} · ${country}</option>`).join('');
+const studentsOptions = () => students.map(({id, name, country}) => `<option value="${id}">${escape(name)} · ${country}</option>`).join('');
 const $ = selector => document.querySelector(selector);
 const date = new Intl.DateTimeFormat('en', { dateStyle: 'medium' });
 const format = (value, unit = '') => value == null ? '—' : `${value}${unit ? ' ' + unit : ''}`;
@@ -78,7 +84,7 @@ $('#app').innerHTML = `
           </section>
         </div>
         <section class="panel community" id="community">
-          <div class="section-heading"><div><h2>Community</h2><p>Connect with your cohort</p></div><span class="badge">25 students</span></div>
+          <div class="section-heading"><div><h2>Community</h2><p>Connect with your cohort</p></div><span class="badge" id="student-count"></span></div>
           <label class="search">Find a student<input id="search" type="search" placeholder="Search name or country"></label>
           <div id="directory"></div>
         </section>
@@ -94,7 +100,7 @@ $('#app').innerHTML = `
     <div class="dialog-heading"><div><h2 id="capture-title">Add a field reading</h2><p>Copy the values from your phone’s Field Test Mode.</p></div><button class="close" data-close="capture" aria-label="Close reading form">${icon('close')}</button></div>
     <form id="capture-form">
       <div class="form-grid">
-        <label>Student<select name="studentId" required><option value="">Select student</option>${studentsOptions}</select></label>
+        <label>Student<select name="studentId" required><option value="">Select student</option>${studentsOptions()}</select></label>
         <label>Carrier<input name="carrier" required maxlength="60" placeholder="e.g. Telstra"></label>
         <label>Technology<select name="tech">${options(technologies)}</select></label>
         <label>Environment<select name="environment">${options(['outdoor', 'indoor'])}</select></label>
@@ -104,12 +110,11 @@ $('#app').innerHTML = `
       </div>
       <p class="data-note">Enter at least one signal metric.</p>
       <p id="capture-status" role="status"></p>
-      <button class="primary" type="submit">Save to server</button>
+      <button class="primary" type="submit">Save reading</button>
     </form>
   </dialog>
 `;
 
-let saved = [];
 let filtered = [];
 let activeStudent;
 let conversations = {};
@@ -137,7 +142,7 @@ function renderChart(readings) {
 }
 
 function render() {
-  const readings = [...demo.readings, ...saved].sort((a, b) => b.takenAt.localeCompare(a.takenAt));
+  const readings = readingsOf(db).filter(r => people.has(r.contributor)).map(r => ({ ...r, studentId: r.contributor }));
   const stats = [
     ['users', students.length, 'Students'],
     ['globe', countries.length, 'Countries & regions'],
@@ -152,7 +157,7 @@ function render() {
   $('#export').disabled = filtered.length === 0;
   $('#rows').innerHTML = filtered.map(r => {
     const student = people.get(r.studentId);
-    return `<tr><th scope="row">${student.name}<small>${student.device} · ${student.country}</small></th>
+    return `<tr><th scope="row">${escape(student.name)}<small>${student.device} · ${student.country}</small></th>
       <td>${escape(r.carrier)}</td><td><span class="badge">${r.tech}</span></td><td>${escape(format(r.band))}</td>
       <td>${format(r.altitude, 'm')}</td>${metrics.map(([key, , unit]) => `<td>${format(r[key], unit)}</td>`).join('')}
       <td>${r.environment}</td><td>${r.source}</td><td>${date.format(new Date(r.takenAt))}</td></tr>`;
@@ -162,10 +167,11 @@ function render() {
 
 function renderDirectory() {
   const query = $('#search').value.trim().toLowerCase();
+  $('#student-count').textContent = `${students.length} students`;
   const matches = students.filter(s => `${s.name} ${s.city} ${s.country}`.toLowerCase().includes(query));
   $('#directory').innerHTML = matches.map((s, i) => `<button class="person" type="button" data-person="${s.id}" style="--tone:${i % 4}">
     <span class="avatar">${s.name.split(' ').map(word => word[0]).slice(0, 2).join('')}</span>
-    <span class="person-info"><strong>${s.name}</strong><small>${flag(s.code)} ${s.country} · ${s.city}</small></span>
+    <span class="person-info"><strong>${escape(s.name)}</strong><small>${flag(s.code)} ${s.country} · ${s.city}</small></span>
     ${icon('chat')}</button>`).join('') || '<p class="empty">No students found.</p>';
 }
 
@@ -236,40 +242,24 @@ $('#export').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
-async function requestReadings(options) {
-  const response = await fetch('/api/readings', options);
-  if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('Reading server unavailable.');
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error);
-  return result;
-}
-
-$('#capture-form').addEventListener('submit', async event => {
+$('#capture-form').addEventListener('submit', event => {
   event.preventDefault();
   const form = event.target;
   const input = Object.fromEntries(new FormData(form));
   for (const key of ['altitude', ...metrics.map(([key]) => key)]) {
     input[key] = input[key] === '' ? null : Number(input[key]);
   }
-  const button = form.querySelector('[type="submit"]');
-  button.disabled = true;
-  $('#capture-status').textContent = 'Saving…';
   try {
-    const reading = await requestReadings({
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
-    });
-    saved.push(reading);
+    addManualReading(db, input.studentId, input);
     $('#country').value = '';
     $('#technology').value = '';
     render();
     form.reset();
     $('#capture').close();
-    $('#api-status').textContent = 'Reading saved to the server.';
+    $('#api-status').textContent = 'Reading saved. It also appears in the Signal Club app feed.';
     $('#readings').scrollIntoView({ block: 'start' });
   } catch (error) {
     $('#capture-status').textContent = error.message;
-  } finally {
-    button.disabled = false;
   }
 });
 
@@ -282,9 +272,18 @@ function updateNavigation() {
 }
 window.addEventListener('hashchange', updateNavigation);
 updateNavigation();
+// The Signal Club app changed the shared data (new reading, new student, deleted post).
+onDbChange(fresh => {
+  db = fresh;
+  loadStudents();
+  const country = $('#country').value;
+  $('#country').innerHTML = `<option value="">All countries</option>${options(countries)}`;
+  $('#country').value = countries.includes(country) ? country : '';
+  $('#capture-form').elements.studentId.innerHTML = `<option value="">Select student</option>${studentsOptions()}`;
+  renderDirectory();
+  render();
+});
+
 renderDirectory();
 render();
-requestReadings().then(records => {
-  saved = [...new Map([...records, ...saved].map(record => [record.id, record])).values()];
-  render();
-}).catch(() => { $('#api-status').textContent = 'Saved readings are unavailable. Showing demo readings.'; });
+$('#api-status').textContent = 'Shared with the Signal Club app on this site. Readings are saved in this browser.';

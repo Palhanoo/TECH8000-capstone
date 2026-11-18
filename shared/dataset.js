@@ -1,11 +1,14 @@
-// Reference data and the reading simulator.
+import { FIELDS } from "./fields.js";
+
+// Shared prototype data for every Signal Club app on the site: reference data,
+// the reading simulator and the seed dataset.
 // A browser can't read radio metrics, so readings here are simulated with realistic
 // ranges and correlations. The Android app would fill the same fields from the phone.
 
-const REGIONS = ["Oceania", "Asia", "Europe", "Americas", "Africa"];
+export const REGIONS = ["Oceania", "Asia", "Europe", "Americas", "Africa"];
 
 // nr = share of readings on 5G for phones that support it; sa = share of those on standalone 5G.
-const COUNTRIES = {
+export const COUNTRIES = {
   AU: { name: "Australia", region: "Oceania", nr: 0.45, sa: 0.15, lte: [3, 7, 28, 1, 40], nrBands: ["n78", "n28"], offset: 1,
         carriers: [["Telstra", "505", "01"], ["Optus", "505", "02"], ["Vodafone", "505", "03"]] },
   MY: { name: "Malaysia", region: "Asia", nr: 0.35, sa: 0.3, lte: [3, 1, 7, 8], nrBands: ["n78"], offset: 0,
@@ -36,7 +39,7 @@ const COUNTRIES = {
         carriers: [["Safaricom", "639", "02"], ["Airtel", "639", "03"]] },
 };
 
-const PLACES = [
+export const PLACES = [
   { id: "clayton", city: "Clayton", cc: "AU", tz: "Australia/Melbourne", lat: -37.911, lon: 145.134, alt: 70, campus: "Monash Clayton",
     spots: ["Matheson Library", "Campus Centre", "Learning and Teaching Building", "Monash Sport", "Menzies Building", "Clayton station"] },
   { id: "caulfield", city: "Caulfield", cc: "AU", tz: "Australia/Melbourne", lat: -37.877, lon: 145.043, alt: 40, campus: "Monash Caulfield",
@@ -78,11 +81,11 @@ const PLACES = [
   { id: "nairobi", city: "Nairobi", cc: "KE", tz: "Africa/Nairobi", lat: -1.286, lon: 36.817, alt: 1795, campus: null,
     spots: ["Westlands", "Nairobi CBD", "Kilimani"] },
 ];
-const PLACE_BY_ID = Object.fromEntries(PLACES.map((p) => [p.id, p]));
+export const PLACE_BY_ID = Object.fromEntries(PLACES.map((p) => [p.id, p]));
 
 // Phones differ in which radio fields their modem reports. That is realistic and
 // gives students genuine missing-data problems to work through.
-const DEVICES = [
+export const DEVICES = [
   { model: "Google Pixel 8", os: "Android 15", nr: true, missing: [] },
   { model: "Samsung Galaxy S24", os: "Android 14", nr: true, missing: ["cqi"] },
   { model: "Samsung Galaxy A15", os: "Android 14", nr: false, missing: ["cqi", "sinr"] },
@@ -91,32 +94,32 @@ const DEVICES = [
   { model: "OPPO A78", os: "Android 13", nr: false, missing: ["cqi", "ta", "sinr", "neighbours"] },
   { model: "iPhone", os: "iOS", nr: true, ios: true, missing: [] },
 ];
-const DEVICE_BY_MODEL = Object.fromEntries(DEVICES.map((d) => [d.model, d]));
+export const DEVICE_BY_MODEL = Object.fromEntries(DEVICES.map((d) => [d.model, d]));
 
-const APP_VERSION = "0.9.0-prototype";
-const DB_VERSION = 3;
-const CONSENT_VERSION = "2026-11";
+export const APP_VERSION = "0.9.0-prototype";
+export const DB_VERSION = 4;
+export const CONSENT_VERSION = "2026-11";
 
 /* ---------- maths helpers ---------- */
-function makeRng(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
-function gauss(rnd) { return Math.sqrt(-2 * Math.log(rnd() || 1e-9)) * Math.cos(2 * Math.PI * rnd()); }
-const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-const pickFrom = (rnd, xs) => xs[Math.floor(rnd() * xs.length)];
-function hashStr(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
-function uid(prefix, rnd = Math.random) { return prefix + "_" + Math.floor(rnd() * 36 ** 8).toString(36).padStart(8, "0"); }
+export function makeRng(seed) { return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
+export function gauss(rnd) { return Math.sqrt(-2 * Math.log(rnd() || 1e-9)) * Math.cos(2 * Math.PI * rnd()); }
+export const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+export const pickFrom = (rnd, xs) => xs[Math.floor(rnd() * xs.length)];
+export function hashStr(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
+export function uid(prefix, rnd = Math.random) { return prefix + "_" + Math.floor(rnd() * 36 ** 8).toString(36).padStart(8, "0"); }
 
-const EARFCN = { 1: [0, 599], 2: [600, 1199], 3: [1200, 1949], 4: [1950, 2399], 5: [2400, 2649], 7: [2750, 3449], 8: [3450, 3799], 12: [5010, 5179], 20: [6150, 6449], 28: [9210, 9659], 38: [37750, 38249], 39: [38250, 38649], 40: [38650, 39649], 41: [39650, 41589], 66: [66436, 67335] };
-const NRARFCN = { n28: [151600, 160600], n40: [460000, 480000], n41: [499200, 537999], n71: [123400, 130400], n77: [620000, 680000], n78: [620000, 653333] };
-const inRange = (rnd, [a, b]) => Math.round(a + rnd() * (b - a));
+export const EARFCN = { 1: [0, 599], 2: [600, 1199], 3: [1200, 1949], 4: [1950, 2399], 5: [2400, 2649], 7: [2750, 3449], 8: [3450, 3799], 12: [5010, 5179], 20: [6150, 6449], 28: [9210, 9659], 38: [37750, 38249], 39: [38250, 38649], 40: [38650, 39649], 41: [39650, 41589], 66: [66436, 67335] };
+export const NRARFCN = { n28: [151600, 160600], n40: [460000, 480000], n41: [499200, 537999], n71: [123400, 130400], n77: [620000, 680000], n78: [620000, 653333] };
+export const inRange = (rnd, [a, b]) => Math.round(a + rnd() * (b - a));
 
 /* ---------- headline signal + quality ---------- */
 // The single number shown on a post. Which measure it is depends on the technology.
-function headline(m) {
+export function headline(m) {
   if (m.tech === "NR-SA") return { value: m.ssRsrp, label: "SS-RSRP" };
   if (m.tech === "3G") return { value: m.rssi, label: "RSSI" };
   return { value: m.rsrp, label: "RSRP" };
 }
-function quality(m) {
+export function quality(m) {
   const v = headline(m).value;
   const [good, poor] = m.tech === "3G" ? [-75, -95] : [-80, -100];
   return v > good ? "good" : v >= poor ? "fair" : "poor";
@@ -124,7 +127,7 @@ function quality(m) {
 
 /* ---------- simulator ---------- */
 // ctx: { place, carrier, device, lat, lon, coarse, environment, floor, spot, runSpeed, takenAt, sessionId, speed, heading, contributor }
-function simulateReading(rnd, ctx) {
+export function simulateReading(rnd, ctx) {
   const country = COUNTRIES[ctx.place.cc], d = ctx.device, na = {};
   const m = {
     readingId: uid("rd", rnd), takenAt: ctx.takenAt || new Date().toISOString(), tz: ctx.place.tz,
@@ -132,7 +135,7 @@ function simulateReading(rnd, ctx) {
     environment: ctx.environment, floor: ctx.environment === "indoor" ? ctx.floor ?? 0 : null,
     carrier: ctx.carrier[0], mcc: ctx.carrier[1], mnc: ctx.carrier[2],
     model: d.model, os: d.os, appVersion: APP_VERSION,
-    sessionId: ctx.sessionId || null, contributor: ctx.contributor, consentVersion: CONSENT_VERSION,
+    sessionId: ctx.sessionId || null, contributor: ctx.contributor, consentVersion: CONSENT_VERSION, source: ctx.source || "App",
     roaming: rnd() < 0.02,
   };
   if (m.environment !== "indoor") na.floor = "not_applicable";
@@ -227,7 +230,7 @@ function simulateReading(rnd, ctx) {
 }
 
 /* ---------- seed data ---------- */
-const SEED_PEOPLE = [
+export const SEED_PEOPLE = [
   ["Bruno Palhano", "clayton"], ["Felipe Munoz", "caulfield"], ["Josh Lim", "manila"], ["Chuck Chin", "hongkong"],
   ["Aubrey Yu", "manila"], ["Mia Thompson", "clayton"], ["Liam Nguyen", "caulfield"], ["Priya Sharma", "mumbai"],
   ["Hana Lee", "parkville"], ["Tom Walsh", "peninsula"], ["Aisyah Rahman", "sunway"], ["Wei Zhang", "suzhou"],
@@ -236,7 +239,7 @@ const SEED_PEOPLE = [
   ["Grace Kim", "sydney"], ["Kai Morgan", "perth"], ["Daniel Tan", "sunway"], ["Emma Wilson", "melbcbd"],
 ];
 
-const CAPTIONS = {
+export const CAPTIONS = {
   good: [
     "Full strength outside {spot}. Taking another one inside to compare.",
     "First standalone 5G I've seen near {spot}. Speed test was wild.",
@@ -256,7 +259,7 @@ const CAPTIONS = {
     "Anyone else lose signal completely at {spot}? Want to check it's not my phone.",
   ],
 };
-const COMMENT_POOL = [
+export const COMMENT_POOL = [
   "Same here on a different carrier, worse at night.",
   "Can you take another one at 6pm? Curious if it's congestion.",
   "Adding this to my time-of-day analysis.",
@@ -266,7 +269,7 @@ const COMMENT_POOL = [
   "Would love a walk session along that route.",
 ];
 
-function seedDb() {
+export function seedDb() {
   const rnd = makeRng(20261118), now = Date.now(), DAY = 864e5;
   const users = SEED_PEOPLE.map(([name, placeId], i) => ({
     id: uid("u", rnd), name, email: name.split(" ")[0].toLowerCase() + "." + (1000 + i) + "@student.monash.edu",
@@ -336,4 +339,57 @@ function seedDb() {
     settings: { coarse: false, showName: true }, joinedAt: new Date(now - 90 * DAY).toISOString(),
   });
   return { version: DB_VERSION, users, posts, audit: [] };
+}
+
+/* ---------- manual entry (copied from the phone's Field Test Mode) ---------- */
+export const MANUAL_METRICS = {
+  rsrp: [-160, -30], rsrq: [-50, 30], sinr: [-40, 60],
+  ssRsrp: [-160, -30], ssRsrq: [-50, 30], ssSinr: [-40, 60], rssi: [-160, -20],
+};
+const LTE_METRICS = ["rsrp", "rsrq", "sinr", "rssi", "cqi", "ta"];
+const NR_METRICS = ["ssRsrp", "ssRsrq", "ssSinr"];
+
+// Validates a manual reading and returns a full record in the same shape as an app reading.
+// Throws an Error with a message fit to show the student.
+export function manualReading(input, user) {
+  if (!user) throw new Error("Select a student.");
+  const { tech, environment, altitude } = input;
+  if (!["LTE", "NR-NSA", "NR-SA", "3G"].includes(tech)) throw new Error("Select a valid technology.");
+  if (!["indoor", "outdoor"].includes(environment)) throw new Error("Select a valid environment.");
+  if (!Number.isFinite(altitude) || altitude < -500 || altitude > 10000) throw new Error("Enter a valid altitude.");
+  const carrier = typeof input.carrier === "string" ? input.carrier.trim() : "";
+  const band = typeof input.band === "string" ? input.band.trim() : "";
+  if (!carrier || carrier.length > 60 || band.length > 20) throw new Error("Check the carrier and band.");
+  const values = {};
+  for (const [key, [min, max]] of Object.entries(MANUAL_METRICS)) {
+    const value = input[key] ?? null;
+    if (value !== null && (!Number.isFinite(value) || value < min || value > max)) throw new Error("Check the signal metric values.");
+    values[key] = value;
+  }
+  if (Object.values(values).every((v) => v === null)) throw new Error("Enter at least one signal metric.");
+
+  const place = PLACE_BY_ID[user.placeId], country = COUNTRIES[place.cc];
+  const known = country.carriers.find(([name]) => name.toLowerCase() === carrier.toLowerCase());
+  const m = {
+    readingId: uid("rd"), takenAt: new Date().toISOString(), tz: place.tz, country: country.name, city: place.city,
+    campus: place.campus, spot: null, environment, floor: null,
+    lat: Math.round(place.lat * 100) / 100, lon: Math.round(place.lon * 100) / 100, coarse: true, altitude: Math.round(altitude),
+    mcc: known?.[1] ?? null, mnc: known?.[2] ?? null, carrier: known?.[0] ?? carrier, tech, band: band || null,
+    model: user.device, os: DEVICE_BY_MODEL[user.device]?.os ?? null, appVersion: APP_VERSION,
+    contributor: user.id, consentVersion: CONSENT_VERSION, sessionId: null, source: "Manual",
+    ...values,
+  };
+  const na = {};
+  for (const f of FIELDS) {
+    if (m[f.key] !== undefined && m[f.key] !== null) continue;
+    const k = f.key;
+    na[k] = tech === "NR-SA" && LTE_METRICS.includes(k) ? "not_applicable"
+      : (tech === "LTE" || tech === "3G") && NR_METRICS.includes(k) ? "not_applicable"
+      : ["down", "up", "latency", "jitter", "loss"].includes(k) ? "not_run"
+      : ["floor", "sessionId", "heading", "speed"].includes(k) || (k === "campus" && !place.campus) ? "not_applicable"
+      : "not_entered";
+    m[k] = null;
+  }
+  m.na = na;
+  return m;
 }

@@ -1,21 +1,22 @@
 # Signal Club
 
-Dashboard de Vite para el proyecto TECH8000. Incluye 25 perfiles ficticios y 100 lecturas sintéticas de 14 países y regiones.
+Dashboard de Vite para el proyecto TECH8000. Usa los mismos datos de prototipo que la app Signal Club
+(`prototypes/bruno`): los estudiantes y las lecturas vienen de `shared/` en la raíz del repositorio.
 
 ## Ejecutar
 
-Con Node.js 22.12 o una versión compatible más reciente:
+El sitio completo se compila con un solo Vite desde la raíz del repositorio, con Node.js 22.12 o más reciente:
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Abre la URL que imprime Vite. Para probar el compilado ejecuta `npm run build` y luego `npm run preview`.
+Abre `/web-app-signal-club/` en la URL que imprime Vite. Para probar el compilado ejecuta `npm run build` y luego `npm run preview`.
 
 ## Flujo de la demo
 
 - Filtra las lecturas por país y tecnología para actualizar los gráficos y la tabla. **Export CSV** descarga la selección.
 - **Add reading** permite copiar manualmente las métricas de Field Test Mode. El navegador no lee los datos de radio del teléfono directamente.
-- El servidor de desarrollo y de vista previa exponen `GET /api/readings` y `POST /api/readings`. Las lecturas nuevas persisten en `.signal-club/readings.ndjson`. La API está pensada para la demo local y no incluye cuentas.
+- Los datos se guardan en el navegador (`localStorage`, clave `signal-club-shared-db`) y se comparten con la app Signal Club del mismo sitio: una lectura añadida aquí aparece en su feed, y las lecturas grabadas allí aparecen aquí, incluso con las dos abiertas en pestañas distintas.
 - En **Community**, elige un estudiante y pulsa **Send**. El chat simula el envío y conserva cada conversación en el navegador.
