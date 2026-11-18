@@ -46,6 +46,18 @@
     margin-bottom: 0.5rem;
   }
   .intro p { color: var(--mist); }
+  .intro-link {
+    display: inline-block;
+    margin-top: 1.25rem;
+    padding: 0.7rem 1.25rem;
+    border-radius: 999px;
+    background: var(--marigold);
+    color: var(--ink);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .intro-link:hover { background: #fff; }
+  .intro-link:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
   .proto-link {
     display: inline-block;
     margin-top: 1.5rem;
@@ -215,6 +227,7 @@
     <header class="intro">
       <h1>TECH8000 Capstone team</h1>
       <p>Meet the people behind our capstone project. Select a name to read their profile.</p>
+      <a class="intro-link" href="web-app-signal-club/index.html">See the admin dashboard prototype</a>
     </header>
 
     <div class="layout">
